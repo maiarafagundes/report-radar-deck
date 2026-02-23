@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Project, WeeklyReport, TeamMember, ProjectStatus } from '@/types/project';
-import { Upload, X, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
+import { Upload, X, FileSpreadsheet, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
@@ -146,6 +146,37 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
     reader.readAsArrayBuffer(file);
   };
 
+  const downloadTemplate = () => {
+    const wb = XLSX.utils.book_new();
+
+    const projData = [
+      { nome: 'DEM MetLife', descricao: 'Operação de monitoramento DEM', categoria: 'SRE', status: 'No Prazo', inicio: '2026-01-19', fim: '2026-06-30', progresso: 35, tags: 'DEM;Monitoring;APM' },
+      { nome: 'Pipeline CI/CD', descricao: 'Modernização do pipeline', categoria: 'DevOps', status: 'Atrasado', inicio: '2025-11-01', fim: '2026-04-30', progresso: 62, tags: 'CI/CD;GitHub Actions' },
+    ];
+    const ws1 = XLSX.utils.json_to_sheet(projData);
+    ws1['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 25 }];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Projetos');
+
+    const teamData = [
+      { projeto: 'DEM MetLife', nome: 'Sherllon', cargo: 'SRE Analyst', senioridade: 'Senior' },
+      { projeto: 'DEM MetLife', nome: 'Luiz Toniolo', cargo: 'SRE Engineer', senioridade: 'Senior' },
+      { projeto: 'Pipeline CI/CD', nome: 'Ana Silva', cargo: 'DevOps Engineer', senioridade: 'Senior' },
+    ];
+    const ws2 = XLSX.utils.json_to_sheet(teamData);
+    ws2['!cols'] = [{ wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Equipe');
+
+    const reportData = [
+      { projeto: 'DEM MetLife', inicio_semana: '2026-02-14', fim_semana: '2026-02-20', status: 'No Prazo', resumo: 'Governança mantida, reprocessamento 100%', destaques: 'Requests 100%;Dashboard finalizado', blockers: 'Acesso CyberArk pendente', tasks_concluidas: 18, tasks_total: 22, incidentes: 4, deploys: 0, uptime: 99.9 },
+      { projeto: 'Pipeline CI/CD', inicio_semana: '2026-02-14', fim_semana: '2026-02-20', status: 'Atrasado', resumo: 'Migração de pipelines em andamento', destaques: '12 pipelines migrados;Build 40% mais rápido', blockers: 'Aprovação segurança pendente', tasks_concluidas: 18, tasks_total: 22, incidentes: 2, deploys: 34, uptime: 99.95 },
+    ];
+    const ws3 = XLSX.utils.json_to_sheet(reportData);
+    ws3['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 40 }, { wch: 35 }, { wch: 30 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Reports');
+
+    XLSX.writeFile(wb, 'template-status-report.xlsx');
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
@@ -158,9 +189,15 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
       <div className="glass-card w-full max-w-lg p-6 animate-slide-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-foreground">Upload de Dados</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={downloadTemplate}>
+              <Download className="h-3.5 w-3.5" />
+              Baixar Template
+            </Button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div

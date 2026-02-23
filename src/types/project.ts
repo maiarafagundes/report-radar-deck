@@ -1,4 +1,5 @@
 export type ProjectStatus = 'on-track' | 'delayed' | 'at-risk' | 'completed';
+export type ProjectType = 'operacao' | 'projeto';
 
 export interface TeamMember {
   id: string;
@@ -30,6 +31,7 @@ export interface Project {
   name: string;
   description: string;
   category: 'DevOps' | 'SRE' | 'Platform' | 'Infrastructure';
+  type: ProjectType;
   status: ProjectStatus;
   startDate: string;
   endDate: string;
@@ -37,6 +39,18 @@ export interface Project {
   team: TeamMember[];
   weeklyReports: WeeklyReport[];
   tags: string[];
+}
+
+export interface Professional {
+  id: string;
+  name: string;
+  role: string;
+  seniority: TeamMember['seniority'];
+  resumo: string;
+  softSkills: string[];
+  certifications: string[];
+  skills: { name: string; level: number }[];
+  projectHistory: { projectName: string; role: string; period: string; current: boolean }[];
 }
 
 export interface DateFilter {

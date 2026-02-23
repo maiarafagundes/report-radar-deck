@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Project, WeeklyReport, TeamMember, ProjectStatus } from '@/types/project';
+import { Project, WeeklyReport, TeamMember, ProjectStatus, Professional } from '@/types/project';
 import { Upload, X, FileSpreadsheet, AlertCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -8,7 +8,7 @@ import * as XLSX from 'xlsx';
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (projects: Project[]) => void;
+  onUpload: (projects: Project[], professionals: Professional[]) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 10);
@@ -115,11 +115,15 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
 
           const tags = String(row['tags'] || row['Tags'] || '').split(';').map(s => s.trim()).filter(Boolean);
 
+          const rawType = String(row['tipo'] || row['type'] || row['Tipo'] || 'projeto').toLowerCase().trim();
+          const projectType = (rawType === 'operacao' || rawType === 'operação' || rawType === 'sustentacao' || rawType === 'sustentação') ? 'operacao' as const : 'projeto' as const;
+
           projects.push({
             id: projectId,
             name: projectName,
             description: String(row['descricao'] || row['description'] || row['Descricao'] || ''),
             category: parseCategory(String(row['categoria'] || row['category'] || row['Categoria'] || 'DevOps')),
+            type: projectType,
             status: parseStatus(String(row['status'] || row['Status'] || '')),
             startDate: String(row['inicio'] || row['start_date'] || row['Inicio'] || ''),
             endDate: String(row['fim'] || row['end_date'] || row['Fim'] || ''),
@@ -130,13 +134,35 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
           });
         }
 
+        // Sheet "Profissionais" (optional - tab 4)
+        const profSheet = workbook.SheetNames.length > 3 ? workbook.Sheets[workbook.SheetNames[3]] : null;
+        const profRows: any[] = profSheet ? XLSX.utils.sheet_to_json(profSheet) : [];
+
+        const professionals: Professional[] = profRows.map(r => ({
+          id: generateId(),
+          name: String(r['nome'] || r['name'] || r['Nome'] || ''),
+          role: String(r['cargo'] || r['role'] || r['Cargo'] || ''),
+          seniority: parseSeniority(String(r['senioridade'] || r['seniority'] || r['Senioridade'] || 'Pleno')),
+          resumo: String(r['resumo'] || r['perfil'] || r['Resumo'] || ''),
+          softSkills: String(r['soft_skills'] || r['softskills'] || r['Soft Skills'] || '').split(';').map(s => s.trim()).filter(Boolean),
+          certifications: String(r['certificacoes'] || r['certifications'] || r['Certificações'] || '').split(';').map(s => s.trim()).filter(Boolean),
+          skills: String(r['skills'] || r['Skills'] || r['habilidades'] || '').split(';').map(s => {
+            const [name, lvl] = s.trim().split(':');
+            return name ? { name: name.trim(), level: Number(lvl) || 3 } : null;
+          }).filter(Boolean) as { name: string; level: number }[],
+          projectHistory: String(r['historico'] || r['history'] || r['Histórico'] || '').split(';').map(s => {
+            const parts = s.trim().split('|');
+            return parts.length >= 2 ? { projectName: parts[0].trim(), role: parts[1].trim(), period: parts[2]?.trim() || '', current: parts[3]?.trim().toLowerCase() === 'sim' } : null;
+          }).filter(Boolean) as Professional['projectHistory'],
+        })).filter(p => p.name);
+
         if (projects.length === 0) {
           setError('Nenhum projeto encontrado na planilha.');
           return;
         }
 
-        onUpload(projects);
-        toast({ title: 'Upload realizado!', description: `${projects.length} projeto(s) importado(s) com sucesso.` });
+        onUpload(projects, professionals);
+        toast({ title: 'Upload realizado!', description: `${projects.length} projeto(s) e ${professionals.length} profissional(is) importado(s).` });
         onClose();
       } catch (err) {
         console.error(err);
@@ -150,11 +176,11 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
     const wb = XLSX.utils.book_new();
 
     const projData = [
-      { nome: 'DEM MetLife', descricao: 'Operação de monitoramento DEM', categoria: 'SRE', status: 'No Prazo', inicio: '2026-01-19', fim: '2026-06-30', progresso: 35, tags: 'DEM;Monitoring;APM' },
-      { nome: 'Pipeline CI/CD', descricao: 'Modernização do pipeline', categoria: 'DevOps', status: 'Atrasado', inicio: '2025-11-01', fim: '2026-04-30', progresso: 62, tags: 'CI/CD;GitHub Actions' },
+      { nome: 'DEM MetLife', descricao: 'Operação de monitoramento DEM', tipo: 'Operação', categoria: 'SRE', status: 'No Prazo', inicio: '2026-01-19', fim: '2026-06-30', progresso: 35, tags: 'DEM;Monitoring;APM' },
+      { nome: 'Pipeline CI/CD', descricao: 'Modernização do pipeline', tipo: 'Projeto', categoria: 'DevOps', status: 'Atrasado', inicio: '2025-11-01', fim: '2026-04-30', progresso: 62, tags: 'CI/CD;GitHub Actions' },
     ];
     const ws1 = XLSX.utils.json_to_sheet(projData);
-    ws1['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 25 }];
+    ws1['!cols'] = [{ wch: 18 }, { wch: 35 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 25 }];
     XLSX.utils.book_append_sheet(wb, ws1, 'Projetos');
 
     const teamData = [
@@ -167,12 +193,18 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
     XLSX.utils.book_append_sheet(wb, ws2, 'Equipe');
 
     const reportData = [
-      { projeto: 'DEM MetLife', inicio_semana: '2026-02-14', fim_semana: '2026-02-20', status: 'No Prazo', resumo: 'Governança mantida, reprocessamento 100%', destaques: 'Requests 100%;Dashboard finalizado', blockers: 'Acesso CyberArk pendente', tasks_concluidas: 18, tasks_total: 22, incidentes: 4, deploys: 0, uptime: 99.9 },
-      { projeto: 'Pipeline CI/CD', inicio_semana: '2026-02-14', fim_semana: '2026-02-20', status: 'Atrasado', resumo: 'Migração de pipelines em andamento', destaques: '12 pipelines migrados;Build 40% mais rápido', blockers: 'Aprovação segurança pendente', tasks_concluidas: 18, tasks_total: 22, incidentes: 2, deploys: 34, uptime: 99.95 },
+      { projeto: 'DEM MetLife', inicio_semana: '2026-02-14', fim_semana: '2026-02-20', status: 'No Prazo', resumo: 'Governança mantida', destaques: 'Requests 100%;Dashboard finalizado', blockers: 'Acesso CyberArk pendente', tasks_concluidas: 18, tasks_total: 22, incidentes: 4, deploys: 0, uptime: 99.9 },
     ];
     const ws3 = XLSX.utils.json_to_sheet(reportData);
     ws3['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 40 }, { wch: 35 }, { wch: 30 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }];
     XLSX.utils.book_append_sheet(wb, ws3, 'Reports');
+
+    const profData = [
+      { nome: 'Sherllon', cargo: 'SRE Analyst', senioridade: 'Senior', resumo: 'Analista focado e detalhista', soft_skills: 'Ownership;Resiliência;Proatividade', certificacoes: 'Dynatrace Associate;ITIL Foundation', skills: 'Dynatrace:5;Monitoring:5;APM:5;Linux:4', historico: 'DEM MetLife|SRE Analyst|Jan/2026 — Atual|Sim' },
+    ];
+    const ws4 = XLSX.utils.json_to_sheet(profData);
+    ws4['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 14 }, { wch: 35 }, { wch: 30 }, { wch: 35 }, { wch: 40 }, { wch: 50 }];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Profissionais');
 
     XLSX.writeFile(wb, 'template-status-report.xlsx');
   };
@@ -234,7 +266,7 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
         <div className="mt-4 rounded-lg bg-secondary/50 p-3 space-y-3">
           <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
             <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
-            Formato esperado (3 abas)
+            Formato esperado (4 abas)
           </p>
 
           <div>
@@ -242,10 +274,10 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
             <div className="overflow-x-auto">
               <table className="text-[10px] text-muted-foreground font-mono w-full">
                 <thead><tr className="text-foreground">
-                  <th className="pr-2 text-left">nome</th><th className="pr-2 text-left">categoria</th><th className="pr-2 text-left">status</th><th className="pr-2 text-left">inicio</th><th className="pr-2 text-left">fim</th><th className="pr-2 text-left">progresso</th><th className="text-left">tags</th>
+                  <th className="pr-2 text-left">nome</th><th className="pr-2 text-left">tipo</th><th className="pr-2 text-left">categoria</th><th className="pr-2 text-left">status</th><th className="pr-2 text-left">inicio</th><th className="pr-2 text-left">fim</th><th className="text-left">tags</th>
                 </tr></thead>
                 <tbody><tr>
-                  <td className="pr-2">Projeto X</td><td className="pr-2">DevOps</td><td className="pr-2">No Prazo</td><td className="pr-2">2026-01-01</td><td className="pr-2">2026-06-30</td><td className="pr-2">50</td><td>CI/CD;K8s</td>
+                  <td className="pr-2">Projeto X</td><td className="pr-2">Projeto</td><td className="pr-2">DevOps</td><td className="pr-2">No Prazo</td><td className="pr-2">2026-01-01</td><td className="pr-2">2026-06-30</td><td>CI/CD;K8s</td>
                 </tr></tbody>
               </table>
             </div>
@@ -274,6 +306,20 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
                 </tr></thead>
                 <tbody><tr>
                   <td className="pr-2">Projeto X</td><td className="pr-2">2026-02-14</td><td className="pr-2">2026-02-20</td><td className="pr-2">No Prazo</td><td className="pr-2">Sprint ok...</td><td>Item 1;Item 2</td>
+                </tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-primary mb-1">Aba 4 — Profissionais</p>
+            <div className="overflow-x-auto">
+              <table className="text-[10px] text-muted-foreground font-mono w-full">
+                <thead><tr className="text-foreground">
+                  <th className="pr-2 text-left">nome</th><th className="pr-2 text-left">cargo</th><th className="pr-2 text-left">skills</th><th className="text-left">certificacoes</th>
+                </tr></thead>
+                <tbody><tr>
+                  <td className="pr-2">Ana Silva</td><td className="pr-2">SRE Engineer</td><td className="pr-2">K8s:5;Docker:4</td><td>CKA;AWS SA</td>
                 </tr></tbody>
               </table>
             </div>

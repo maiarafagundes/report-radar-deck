@@ -6,10 +6,11 @@ import ProjectCard from '@/components/ProjectCard';
 import ProjectDetail from '@/components/ProjectDetail';
 import ExecutiveDashboard from '@/components/ExecutiveDashboard';
 import ProfessionalModal from '@/components/ProfessionalModal';
+import TeamTab from '@/components/TeamTab';
 import UploadModal from '@/components/UploadModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban } from 'lucide-react';
+import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users } from 'lucide-react';
 
 const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Todos', value: 'all' },
@@ -18,7 +19,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Em Risco', value: 'at-risk' },
 ];
 
-type TabView = 'dashboard' | 'projects';
+type TabView = 'dashboard' | 'projects' | 'team';
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>(mockProjects);
@@ -146,6 +147,17 @@ const Index = () => {
             <FolderKanban className="h-4 w-4" />
             Projetos
           </button>
+          <button
+            onClick={() => setActiveTab('team')}
+            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'team'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            Equipe
+          </button>
           <Button variant="ghost" size="sm" className="gap-2 ml-2" onClick={() => setUploadOpen(true)}>
             <Upload className="h-4 w-4" />
             Upload
@@ -158,6 +170,14 @@ const Index = () => {
             professionals={professionals}
             onProfessionalClick={handleProfessionalClick}
             onProjectClick={(id) => setSelectedProjectId(id)}
+          />
+        )}
+
+        {activeTab === 'team' && (
+          <TeamTab
+            professionals={professionals}
+            projects={projects}
+            onProfessionalClick={handleProfessionalClick}
           />
         )}
 

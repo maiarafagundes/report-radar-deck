@@ -11,9 +11,10 @@ import { generateProjectPDF } from '@/lib/pdfExport';
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
+  onMemberClick?: (name: string) => void;
 }
 
-const ProjectDetail = ({ project, onBack }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -85,7 +86,7 @@ const ProjectDetail = ({ project, onBack }: ProjectDetailProps) => {
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3">Equipe Ativa ({project.team.length})</h2>
         <div className="glass-card p-4">
-          <TeamList team={project.team} />
+          <TeamList team={project.team} onMemberClick={onMemberClick} />
         </div>
       </div>
 

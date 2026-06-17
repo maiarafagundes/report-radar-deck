@@ -25,7 +25,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team';
 
 const Index = () => {
-  const { projects, reload: reloadProjects, createProject, addReport, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals } = useProfessionalsDb();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
@@ -101,6 +101,8 @@ const Index = () => {
             onBack={() => setSelectedProjectId(null)}
             onMemberClick={handleProfessionalClick}
             onAddReport={(projectId, report) => { addReport(projectId, report); }}
+            professionals={professionals}
+            onUpdateTeam={(projectId, team) => setProjectTeam(projectId, team)}
           />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />

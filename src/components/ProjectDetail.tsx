@@ -1,27 +1,31 @@
 import { useState } from 'react';
-import { Project, WeeklyReport } from '@/types/project';
+import { Project, WeeklyReport, TeamMember, Professional } from '@/types/project';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, Plus } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
+import ManageTeamModal from './ManageTeamModal';
 
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
   onMemberClick?: (name: string) => void;
   onAddReport?: (projectId: string, report: WeeklyReport) => void;
+  professionals?: Professional[];
+  onUpdateTeam?: (projectId: string, team: TeamMember[]) => Promise<void> | void;
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
   const [reportOpen, setReportOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -82,9 +86,23 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectD
 
       {/* Team */}
       <div>
-        <h2 className="text-lg font-bold text-foreground mb-3">Equipe Ativa ({project.team.length})</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-foreground">Equipe Ativa ({project.team.length})</h2>
+          {onUpdateTeam && (
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setTeamOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+              Gerenciar Equipe
+            </Button>
+          )}
+        </div>
         <div className="glass-card p-4">
-          <TeamList team={project.team} onMemberClick={onMemberClick} />
+          {project.team.length === 0 ? (
+            <p className="text-sm text-muted-foreground italic text-center py-2">
+              Nenhum profissional atrelado. Clique em "Gerenciar Equipe" para adicionar.
+            </p>
+          ) : (
+            <TeamList team={project.team} onMemberClick={onMemberClick} />
+          )}
         </div>
       </div>
 
@@ -132,6 +150,16 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectD
         onClose={() => setReportOpen(false)}
         onCreate={(report) => onAddReport?.(project.id, report)}
       />
+      {onUpdateTeam && (
+        <ManageTeamModal
+          isOpen={teamOpen}
+          onClose={() => setTeamOpen(false)}
+          projectName={project.name}
+          currentTeam={project.team}
+          professionals={professionals}
+          onSave={(team) => onUpdateTeam(project.id, team)}
+        />
+      )}
     </div>
   );
 };

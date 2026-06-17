@@ -14,7 +14,199 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      professionals: {
+        Row: {
+          certifications: string[]
+          created_at: string
+          id: string
+          name: string
+          project_history: Json
+          resumo: string
+          role: string
+          seniority: string
+          skills: Json
+          soft_skills: string[]
+          updated_at: string
+        }
+        Insert: {
+          certifications?: string[]
+          created_at?: string
+          id?: string
+          name: string
+          project_history?: Json
+          resumo?: string
+          role?: string
+          seniority?: string
+          skills?: Json
+          soft_skills?: string[]
+          updated_at?: string
+        }
+        Update: {
+          certifications?: string[]
+          created_at?: string
+          id?: string
+          name?: string
+          project_history?: Json
+          resumo?: string
+          role?: string
+          seniority?: string
+          skills?: Json
+          soft_skills?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          end_date: string
+          id: string
+          name: string
+          progress: number
+          start_date: string
+          status: string
+          tags: string[]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          name: string
+          progress?: number
+          start_date?: string
+          status?: string
+          tags?: string[]
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          end_date?: string
+          id?: string
+          name?: string
+          progress?: number
+          start_date?: string
+          status?: string
+          tags?: string[]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          id: string
+          name: string
+          project_id: string
+          role: string
+          seniority: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          project_id: string
+          role?: string
+          seniority?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string
+          role?: string
+          seniority?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_reports: {
+        Row: {
+          blockers: string[]
+          created_at: string
+          deployments_count: number
+          highlights: string[]
+          id: string
+          in_progress: string[]
+          incidents_resolved: number
+          indicators: string[]
+          next_steps: string[]
+          project_id: string
+          status: string
+          summary: string
+          tasks_completed: number
+          tasks_total: number
+          uptime_percent: number
+          week_end: string
+          week_start: string
+        }
+        Insert: {
+          blockers?: string[]
+          created_at?: string
+          deployments_count?: number
+          highlights?: string[]
+          id?: string
+          in_progress?: string[]
+          incidents_resolved?: number
+          indicators?: string[]
+          next_steps?: string[]
+          project_id: string
+          status?: string
+          summary?: string
+          tasks_completed?: number
+          tasks_total?: number
+          uptime_percent?: number
+          week_end: string
+          week_start: string
+        }
+        Update: {
+          blockers?: string[]
+          created_at?: string
+          deployments_count?: number
+          highlights?: string[]
+          id?: string
+          in_progress?: string[]
+          incidents_resolved?: number
+          indicators?: string[]
+          next_steps?: string[]
+          project_id?: string
+          status?: string
+          summary?: string
+          tasks_completed?: number
+          tasks_total?: number
+          uptime_percent?: number
+          week_end?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

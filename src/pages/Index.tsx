@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Project, ProjectStatus, Professional } from '@/types/project';
-import { mockProjects } from '@/data/mockProjects';
-import { mockProfessionals } from '@/data/mockProfessionals';
+import { useProjectsDb } from '@/hooks/useProjectsDb';
+import { useProfessionalsDb } from '@/hooks/useProfessionalsDb';
+import { seedIfEmpty } from '@/lib/seedIfEmpty';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectDetail from '@/components/ProjectDetail';
 import ExecutiveDashboard from '@/components/ExecutiveDashboard';
@@ -23,8 +24,8 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team';
 
 const Index = () => {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [professionals, setProfessionals] = useState<Professional[]>(mockProfessionals);
+  const { projects, reload: reloadProjects, createProject, addReport, bulkUpsertProjects } = useProjectsDb();
+  const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals } = useProfessionalsDb();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +35,12 @@ const Index = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>('dashboard');
+
+  useEffect(() => {
+    seedIfEmpty().then(seeded => {
+      if (seeded) { reloadProjects(); reloadProfessionals(); }
+    });
+  }, [reloadProjects, reloadProfessionals]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
@@ -48,27 +55,9 @@ const Index = () => {
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
 
-  const handleUpload = (newProjects: Project[], newProfessionals: Professional[]) => {
-    setProjects(prev => {
-      const updated = [...prev];
-      newProjects.forEach(np => {
-        const idx = updated.findIndex(p => p.id === np.id);
-        if (idx >= 0) updated[idx] = np;
-        else updated.push(np);
-      });
-      return updated;
-    });
-    if (newProfessionals.length > 0) {
-      setProfessionals(prev => {
-        const updated = [...prev];
-        newProfessionals.forEach(np => {
-          const idx = updated.findIndex(p => p.name.toLowerCase() === np.name.toLowerCase());
-          if (idx >= 0) updated[idx] = np;
-          else updated.push(np);
-        });
-        return updated;
-      });
-    }
+  const handleUpload = async (newProjects: Project[], newProfessionals: Professional[]) => {
+    await bulkUpsertProjects(newProjects);
+    if (newProfessionals.length > 0) await bulkUpsertProfessionals(newProfessionals);
   };
 
   const handleProfessionalClick = (name: string) => {
@@ -110,13 +99,7 @@ const Index = () => {
             project={selectedProject}
             onBack={() => setSelectedProjectId(null)}
             onMemberClick={handleProfessionalClick}
-            onAddReport={(projectId, report) => {
-              setProjects(prev => prev.map(p =>
-                p.id === projectId
-                  ? { ...p, weeklyReports: [report, ...p.weeklyReports], status: report.status }
-                  : p
-              ));
-            }}
+            onAddReport={(projectId, report) => { addReport(projectId, report); }}
           />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
@@ -258,7 +241,7 @@ const Index = () => {
       <NewProjectModal
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
-        onCreate={(p) => setProjects(prev => [p, ...prev])}
+        onCreate={(p) => { createProject(p); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
     </div>

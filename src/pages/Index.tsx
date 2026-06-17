@@ -106,7 +106,18 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-6xl px-4 py-6">
-          <ProjectDetail project={selectedProject} onBack={() => setSelectedProjectId(null)} onMemberClick={handleProfessionalClick} />
+          <ProjectDetail
+            project={selectedProject}
+            onBack={() => setSelectedProjectId(null)}
+            onMemberClick={handleProfessionalClick}
+            onAddReport={(projectId, report) => {
+              setProjects(prev => prev.map(p =>
+                p.id === projectId
+                  ? { ...p, weeklyReports: [report, ...p.weeklyReports], status: report.status }
+                  : p
+              ));
+            }}
+          />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
       </div>

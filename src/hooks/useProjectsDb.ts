@@ -75,6 +75,18 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
+  const setProjectTeam = useCallback(async (projectId: string, team: import('@/types/project').TeamMember[]) => {
+    const { error: delErr } = await supabase.from('team_members').delete().eq('project_id', projectId);
+    if (delErr) throw delErr;
+    if (team.length) {
+      const { error: insErr } = await supabase
+        .from('team_members')
+        .insert(team.map(m => mapTeamToDb(projectId, m)));
+      if (insErr) throw insErr;
+    }
+    await reload();
+  }, [reload]);
+
   const bulkUpsertProjects = useCallback(async (incoming: Project[]) => {
     if (!incoming.length) return;
     const { error } = await supabase
@@ -96,5 +108,5 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
-  return { projects, loading, reload, createProject, addReport, bulkUpsertProjects };
+  return { projects, loading, reload, createProject, addReport, setProjectTeam, bulkUpsertProjects };
 }

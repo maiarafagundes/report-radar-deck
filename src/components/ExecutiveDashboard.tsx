@@ -168,7 +168,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-danger/5 border border-danger/20 p-3 hover:bg-danger/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>
@@ -187,7 +187,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-warning/5 border border-warning/20 p-3 hover:bg-warning/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>
@@ -206,7 +206,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-success/5 border border-success/20 p-3 hover:bg-success/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>

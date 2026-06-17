@@ -14,6 +14,30 @@ interface ExecutiveDashboardProps {
 
 const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onProjectClick }: ExecutiveDashboardProps) => {
   const [selectedSituation, setSelectedSituation] = useState<null | 'stable' | 'atRisk' | 'critical'>(null);
+
+  const situationStyles = {
+    success: {
+      text: 'text-success',
+      icon: 'text-success',
+      activeRing: 'ring-2 ring-success/40 border-success/50',
+      hoverBorder: 'hover:border-success/40',
+      cardBg: 'bg-success/5 border-success/20 hover:bg-success/10',
+    },
+    warning: {
+      text: 'text-warning',
+      icon: 'text-warning',
+      activeRing: 'ring-2 ring-warning/40 border-warning/50',
+      hoverBorder: 'hover:border-warning/40',
+      cardBg: 'bg-warning/5 border-warning/20 hover:bg-warning/10',
+    },
+    danger: {
+      text: 'text-danger',
+      icon: 'text-danger',
+      activeRing: 'ring-2 ring-danger/40 border-danger/50',
+      hoverBorder: 'hover:border-danger/40',
+      cardBg: 'bg-danger/5 border-danger/20 hover:bg-danger/10',
+    },
+  } as const;
   const stats = useMemo(() => {
     const clients = [...new Set(projects.map(p => p.name))];
     const tags = projects.reduce<Record<string, number>>((acc, p) => {
@@ -115,14 +139,15 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
             { key: 'critical', label: 'Críticos', count: stats.critical.length, color: 'danger',  Icon: AlertCircle },
           ] as const).map(({ key, label, count, color, Icon }) => {
             const active = selectedSituation === key;
+            const s = situationStyles[color];
             return (
               <button
                 key={key}
                 onClick={() => setSelectedSituation(active ? null : key)}
-                className={`glass-card p-4 text-center transition-all hover:border-${color}/40 hover:-translate-y-0.5 ${active ? `ring-2 ring-${color}/40 border-${color}/50` : ''}`}
+                className={`glass-card p-4 text-center transition-all ${s.hoverBorder} hover:-translate-y-0.5 ${active ? s.activeRing : ''}`}
               >
-                <Icon className={`mx-auto h-5 w-5 text-${color} mb-1`} />
-                <p className={`text-2xl font-bold text-${color}`}>{count}</p>
+                <Icon className={`mx-auto h-5 w-5 ${s.icon} mb-1`} />
+                <p className={`text-2xl font-bold ${s.text}`}>{count}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>
               </button>
             );
@@ -136,12 +161,13 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
                 stable:   { list: stats.stable,   label: 'Estáveis', color: 'success', Icon: CheckCircle },
                 atRisk:   { list: stats.atRisk,   label: 'Em Risco', color: 'warning', Icon: AlertTriangle },
                 critical: { list: stats.critical, label: 'Críticos', color: 'danger',  Icon: AlertCircle },
-              }[selectedSituation];
+              }[selectedSituation] as { list: Project[]; label: string; color: 'success'|'warning'|'danger'; Icon: typeof CheckCircle };
               const Icon = conf.Icon;
+              const s = situationStyles[conf.color];
               return (
                 <>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className={`text-sm font-bold text-${conf.color} flex items-center gap-2`}>
+                    <h3 className={`text-sm font-bold ${s.text} flex items-center gap-2`}>
                       <Icon className="h-4 w-4" /> {conf.label} ({conf.list.length})
                     </h3>
                     <button
@@ -160,7 +186,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
                         <button
                           key={p.id}
                           onClick={() => onProjectClick(p.id)}
-                          className={`text-left rounded-lg bg-${conf.color}/5 border border-${conf.color}/20 p-3 hover:bg-${conf.color}/10 transition-colors`}
+                          className={`text-left rounded-lg border p-3 transition-colors ${s.cardBg}`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-sm font-medium text-foreground truncate">{p.name}</span>

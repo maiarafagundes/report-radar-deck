@@ -74,8 +74,32 @@ Deno.serve(async (req) => {
               type: "object",
               properties: {
                 resumo: { type: "string", description: "Resumo executivo do portfólio em 3-5 frases" },
-                destaques: { type: "array", items: { type: "string" }, description: "5 a 8 destaques/conquistas relevantes" },
-                riscos: { type: "array", items: { type: "string" }, description: "5 a 8 riscos e bloqueios sistêmicos" },
+                destaques: {
+                  type: "array",
+                  description: "5 a 8 destaques/conquistas relevantes com identificacao dos projetos relacionados",
+                  items: {
+                    type: "object",
+                    properties: {
+                      texto: { type: "string", description: "Descricao do destaque" },
+                      projetos: { type: "array", items: { type: "string" }, description: "Nomes dos projetos relacionados a este destaque" },
+                    },
+                    required: ["texto", "projetos"],
+                    additionalProperties: false,
+                  },
+                },
+                riscos: {
+                  type: "array",
+                  description: "5 a 8 riscos e bloqueios sistêmicos com identificacao dos projetos relacionados",
+                  items: {
+                    type: "object",
+                    properties: {
+                      texto: { type: "string", description: "Descricao do risco" },
+                      projetos: { type: "array", items: { type: "string" }, description: "Nomes dos projetos relacionados a este risco" },
+                    },
+                    required: ["texto", "projetos"],
+                    additionalProperties: false,
+                  },
+                },
                 todos: {
                   type: "array",
                   description: "5 a 10 ações recomendadas (TO-DOs) priorizadas",

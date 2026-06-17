@@ -11,10 +11,20 @@ interface TodoItem {
   responsavel: string;
 }
 
+interface HighlightItem {
+  texto: string;
+  projetos: string[];
+}
+
+interface RiskItem {
+  texto: string;
+  projetos: string[];
+}
+
 interface Summary {
   resumo: string;
-  destaques: string[];
-  riscos: string[];
+  destaques: HighlightItem[];
+  riscos: RiskItem[];
   todos: TodoItem[];
 }
 

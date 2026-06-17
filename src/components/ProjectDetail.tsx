@@ -5,7 +5,7 @@ import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle, Plus, Activity, ListTodo, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';

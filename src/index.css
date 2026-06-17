@@ -104,3 +104,14 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(var(--chart-4))];
   }
 }
+
+@layer utilities {
+  @keyframes pulse-once {
+    0%   { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.45); }
+    70%  { box-shadow: 0 0 0 10px hsl(var(--primary) / 0); }
+    100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+  }
+  .animate-pulse-once {
+    animation: pulse-once 1.8s ease-out 1;
+  }
+}

@@ -3,6 +3,7 @@ import { Project, Professional } from '@/types/project';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck } from 'lucide-react';
 import AIExecutiveSummary from './AIExecutiveSummary';
+import LiveStatusBoard from './LiveStatusBoard';
 
 interface ExecutiveDashboardProps {
   projects: Project[];
@@ -69,6 +70,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
 
   return (
     <div className="space-y-6 animate-slide-in">
+      <LiveStatusBoard projects={projects} onProjectClick={onProjectClick} />
       <AIExecutiveSummary projects={projects} />
       {/* Modelos de Atendimento */}
       <div>

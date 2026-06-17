@@ -76,12 +76,6 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
         </div>
       </div>
 
-      {/* Charts */}
-      <div>
-        <h2 className="text-lg font-bold text-foreground mb-3">Métricas & Gráficos</h2>
-        <ProjectCharts reports={project.weeklyReports} />
-      </div>
-
       {/* Team */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3">Equipe Ativa ({project.team.length})</h2>

@@ -1,28 +1,11 @@
 import { Professional } from '@/types/project';
-import { X, Award, Brain, History, Star, Briefcase } from 'lucide-react';
+import { X, Award, Brain, History, Star } from 'lucide-react';
 import { getSeniorityColor } from '@/lib/projectUtils';
 
 interface ProfessionalModalProps {
   professional: Professional | null;
   onClose: () => void;
 }
-
-const SkillBar = ({ name, level }: { name: string; level: number }) => (
-  <div className="flex items-center gap-3">
-    <span className="text-xs text-muted-foreground w-28 shrink-0 truncate">{name}</span>
-    <div className="flex-1 flex gap-1">
-      {[1, 2, 3, 4, 5].map(i => (
-        <div
-          key={i}
-          className={`h-2.5 flex-1 rounded-full transition-colors ${
-            i <= level ? 'bg-primary' : 'bg-secondary'
-          }`}
-        />
-      ))}
-    </div>
-    <span className="text-xs text-muted-foreground w-6 text-right">{level}/5</span>
-  </div>
-);
 
 const ProfessionalModal = ({ professional, onClose }: ProfessionalModalProps) => {
   if (!professional) return null;
@@ -79,21 +62,6 @@ const ProfessionalModal = ({ professional, onClose }: ProfessionalModalProps) =>
             ))}
             {professional.certifications.length === 0 && (
               <p className="text-xs text-muted-foreground">Nenhuma certificação cadastrada</p>
-            )}
-          </div>
-        </div>
-
-        {/* Skill Map */}
-        <div className="mb-5">
-          <h3 className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
-            <Briefcase className="h-3.5 w-3.5 text-primary" /> Capacidade Técnica (Skill Map)
-          </h3>
-          <div className="space-y-2.5 bg-secondary/30 rounded-lg p-3">
-            {professional.skills.map(skill => (
-              <SkillBar key={skill.name} name={skill.name} level={skill.level} />
-            ))}
-            {professional.skills.length === 0 && (
-              <p className="text-xs text-muted-foreground">Nenhuma skill cadastrada</p>
             )}
           </div>
         </div>

@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    const systemPrompt = `Você é um analista executivo sênior de DevOps/SRE. Analise o portfólio de projetos e gere um status executivo consolidado em português, objetivo, com tom corporativo. Identifique padrões, riscos sistêmicos, oportunidades e proponha ações práticas. Responda APENAS com JSON válido seguindo o schema solicitado.`;
+    const systemPrompt = `Você é um analista executivo sênior de DevOps/SRE. Analise o portfólio de projetos e gere um status executivo consolidado em português, objetivo, com tom corporativo. Identifique padrões, riscos sistêmicos, oportunidades e proponha ações práticas. Para cada destaque e risco, identifique explicitamente quais projetos estão relacionados. Responda APENAS com JSON válido seguindo o schema solicitado.`;
 
     const userPrompt = `Portfólio (${compact.length} projetos):\n\n${JSON.stringify(compact, null, 2)}\n\nGere um status executivo consolidado.`;
 
@@ -74,8 +74,32 @@ Deno.serve(async (req) => {
               type: "object",
               properties: {
                 resumo: { type: "string", description: "Resumo executivo do portfólio em 3-5 frases" },
-                destaques: { type: "array", items: { type: "string" }, description: "5 a 8 destaques/conquistas relevantes" },
-                riscos: { type: "array", items: { type: "string" }, description: "5 a 8 riscos e bloqueios sistêmicos" },
+                destaques: {
+                  type: "array",
+                  description: "5 a 8 destaques/conquistas relevantes com identificacao dos projetos relacionados",
+                  items: {
+                    type: "object",
+                    properties: {
+                      texto: { type: "string", description: "Descricao do destaque" },
+                      projetos: { type: "array", items: { type: "string" }, description: "Nomes dos projetos relacionados a este destaque" },
+                    },
+                    required: ["texto", "projetos"],
+                    additionalProperties: false,
+                  },
+                },
+                riscos: {
+                  type: "array",
+                  description: "5 a 8 riscos e bloqueios sistêmicos com identificacao dos projetos relacionados",
+                  items: {
+                    type: "object",
+                    properties: {
+                      texto: { type: "string", description: "Descricao do risco" },
+                      projetos: { type: "array", items: { type: "string" }, description: "Nomes dos projetos relacionados a este risco" },
+                    },
+                    required: ["texto", "projetos"],
+                    additionalProperties: false,
+                  },
+                },
                 todos: {
                   type: "array",
                   description: "5 a 10 ações recomendadas (TO-DOs) priorizadas",

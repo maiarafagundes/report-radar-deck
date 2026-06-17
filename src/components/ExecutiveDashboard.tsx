@@ -22,6 +22,8 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
     const byType = {
       operacao: projects.filter(p => p.type === 'operacao'),
       projeto: projects.filter(p => p.type === 'projeto'),
+      sustentacao: projects.filter(p => p.type === 'sustentacao'),
+      dedicado: projects.filter(p => p.type === 'dedicado'),
     };
 
     const stable = projects.filter(p => p.status === 'on-track' || p.status === 'completed');
@@ -54,6 +56,15 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
 
     return { clients, sortedTags, byType, stable, atRisk, critical, categoryData, situationData, uniqueMembers: Array.from(uniqueMembers.values()) };
   }, [projects]);
+
+  const getTypeLabel = (type: Project['type']) => {
+    switch (type) {
+      case 'operacao': return 'Operação';
+      case 'sustentacao': return 'Sustentação';
+      case 'dedicado': return 'Dedicado';
+      default: return 'Projeto';
+    }
+  };
 
   return (
     <div className="space-y-6 animate-slide-in">

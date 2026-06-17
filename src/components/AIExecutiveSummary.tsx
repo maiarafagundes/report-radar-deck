@@ -109,11 +109,20 @@ const AIExecutiveSummary = ({ projects }: Props) => {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-success mb-2 flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5" /> Destaques
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {summary.destaques.map((d, i) => (
-                  <li key={i} className="text-sm text-foreground flex gap-2">
-                    <span className="text-success mt-1">•</span>
-                    <span>{d}</span>
+                  <li key={i} className="text-sm text-foreground">
+                    <div className="flex gap-2">
+                      <span className="text-success mt-1">•</span>
+                      <span>{d.texto}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1 pl-4">
+                      {d.projetos.map((nome, j) => (
+                        <span key={j} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {nome}
+                        </span>
+                      ))}
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -123,11 +132,20 @@ const AIExecutiveSummary = ({ projects }: Props) => {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-danger mb-2 flex items-center gap-2">
                 <AlertTriangle className="h-3.5 w-3.5" /> Riscos
               </h3>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {summary.riscos.map((r, i) => (
-                  <li key={i} className="text-sm text-foreground flex gap-2">
-                    <span className="text-danger mt-1">•</span>
-                    <span>{r}</span>
+                  <li key={i} className="text-sm text-foreground">
+                    <div className="flex gap-2">
+                      <span className="text-danger mt-1">•</span>
+                      <span>{r.texto}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1 pl-4">
+                      {r.projetos.map((nome, j) => (
+                        <span key={j} className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-danger/10 text-danger border border-danger/20">
+                          {nome}
+                        </span>
+                      ))}
+                    </div>
                   </li>
                 ))}
               </ul>

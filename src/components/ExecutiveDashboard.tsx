@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Project, Professional } from '@/types/project';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck } from 'lucide-react';
+import AIExecutiveSummary from './AIExecutiveSummary';
 
 interface ExecutiveDashboardProps {
   projects: Project[];
@@ -68,6 +69,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
 
   return (
     <div className="space-y-6 animate-slide-in">
+      <AIExecutiveSummary projects={projects} />
       {/* Modelos de Atendimento */}
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Modelos de Atendimento</h2>

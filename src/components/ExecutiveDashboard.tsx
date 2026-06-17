@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Project, Professional } from '@/types/project';
-import { getStatusLabel } from '@/lib/projectUtils';
-import StatusBadge from './StatusBadge';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Building2, Users, Tag, AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase } from 'lucide-react';
+import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase } from 'lucide-react';
 
 interface ExecutiveDashboardProps {
   projects: Project[];
@@ -186,43 +184,6 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
         </div>
       </div>
 
-      {/* Tags */}
-      <div className="glass-card p-5">
-        <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-          <Tag className="h-4 w-4 text-primary" /> Top Tags
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {stats.sortedTags.map(([tag, count]) => (
-            <span key={tag} className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-foreground">
-              {tag} <span className="text-muted-foreground ml-1">({count})</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Team Overview */}
-      <div className="glass-card p-5">
-        <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-          <Users className="h-4 w-4 text-primary" /> Equipe ({stats.uniqueMembers.length} profissionais)
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {stats.uniqueMembers.map(member => (
-            <button
-              key={member.name}
-              onClick={() => onProfessionalClick(member.name)}
-              className="flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2.5 hover:bg-secondary transition-colors text-left"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary shrink-0">
-                {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-                <p className="text-xs text-muted-foreground">{member.role} · {member.projectCount} projeto(s)</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

@@ -103,6 +103,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          allocation_percent: number
           avatar: string | null
           created_at: string
           id: string
@@ -112,6 +113,7 @@ export type Database = {
           seniority: string
         }
         Insert: {
+          allocation_percent?: number
           avatar?: string | null
           created_at?: string
           id?: string
@@ -121,6 +123,7 @@ export type Database = {
           seniority?: string
         }
         Update: {
+          allocation_percent?: number
           avatar?: string | null
           created_at?: string
           id?: string

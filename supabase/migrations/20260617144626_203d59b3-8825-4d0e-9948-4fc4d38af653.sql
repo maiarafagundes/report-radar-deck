@@ -1,0 +1,1 @@
+ALTER TABLE public.team_members ADD COLUMN IF NOT EXISTS allocation_percent integer NOT NULL DEFAULT 100;

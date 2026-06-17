@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Professional, TeamMember } from '@/types/project';
 import { Search, UserPlus, X } from 'lucide-react';
+import { Input as TextInput } from '@/components/ui/input';
 
 interface Props {
   isOpen: boolean;
@@ -38,11 +39,15 @@ export default function ManageTeamModal({ isOpen, onClose, projectName, currentT
     if (isSelected(p.id, p.name)) {
       setSelected(prev => prev.filter(s => s.id !== p.id && s.name.toLowerCase() !== p.name.toLowerCase()));
     } else {
-      setSelected(prev => [...prev, { id: p.id, name: p.name, role: p.role, seniority: p.seniority }]);
+      setSelected(prev => [...prev, { id: p.id, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: 100 }]);
     }
   };
 
   const removeMember = (id: string) => setSelected(prev => prev.filter(s => s.id !== id));
+
+  const updateAllocation = (id: string, value: number) => {
+    setSelected(prev => prev.map(s => s.id === id ? { ...s, allocationPercent: Math.max(0, Math.min(200, isNaN(value) ? 0 : value)) } : s));
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -70,14 +75,28 @@ export default function ManageTeamModal({ isOpen, onClose, projectName, currentT
             {selected.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">Nenhum profissional atrelado ainda.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {selected.map(m => (
-                  <span key={m.id} className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 text-primary border border-primary/30 px-2.5 py-1 text-xs">
-                    {m.name} · <span className="opacity-70">{m.role || m.seniority}</span>
-                    <button onClick={() => removeMember(m.id)} className="hover:bg-primary/20 rounded-full p-0.5">
-                      <X className="h-3 w-3" />
+                  <div key={m.id} className="flex items-center gap-2 rounded-lg bg-secondary/50 px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{m.name}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{m.role || m.seniority}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <TextInput
+                        type="number"
+                        min={0}
+                        max={200}
+                        value={m.allocationPercent ?? 100}
+                        onChange={(e) => updateAllocation(m.id, Number(e.target.value))}
+                        className="w-20 h-8 text-sm"
+                      />
+                      <span className="text-xs text-muted-foreground">%</span>
+                    </div>
+                    <button onClick={() => removeMember(m.id)} className="text-muted-foreground hover:text-danger p-1">
+                      <X className="h-4 w-4" />
                     </button>
-                  </span>
+                  </div>
                 ))}
               </div>
             )}

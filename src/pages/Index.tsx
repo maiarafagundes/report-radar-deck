@@ -8,12 +8,13 @@ import ProjectDetail from '@/components/ProjectDetail';
 import ExecutiveDashboard from '@/components/ExecutiveDashboard';
 import ProfessionalModal from '@/components/ProfessionalModal';
 import TeamTab from '@/components/TeamTab';
+import AllocationTab from '@/components/AllocationTab';
 import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus } from 'lucide-react';
+import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge } from 'lucide-react';
 
 const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Todos', value: 'all' },
@@ -22,7 +23,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Em Risco', value: 'at-risk' },
 ];
 
-type TabView = 'dashboard' | 'projects' | 'team';
+type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
   const { projects, reload: reloadProjects, createProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
@@ -160,6 +161,17 @@ const Index = () => {
             <Users className="h-4 w-4" />
             Equipe
           </button>
+          <button
+            onClick={() => setActiveTab('allocation')}
+            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'allocation'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Gauge className="h-4 w-4" />
+            Alocação
+          </button>
           <Button variant="ghost" size="sm" className="gap-2 ml-2" onClick={() => setUploadOpen(true)}>
             <Upload className="h-4 w-4" />
             Upload
@@ -182,6 +194,14 @@ const Index = () => {
             onProfessionalClick={handleProfessionalClick}
             onCreateProfessional={(pro) => bulkUpsertProfessionals([pro])}
             onBulkUploadProfessionals={(pros) => bulkUpsertProfessionals(pros)}
+          />
+        )}
+
+        {activeTab === 'allocation' && (
+          <AllocationTab
+            professionals={professionals}
+            projects={projects}
+            onProfessionalClick={handleProfessionalClick}
           />
         )}
 

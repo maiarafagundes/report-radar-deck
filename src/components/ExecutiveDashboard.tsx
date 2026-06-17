@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Project, Professional } from '@/types/project';
-import { getStatusLabel } from '@/lib/projectUtils';
-import StatusBadge from './StatusBadge';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Building2, Users, Tag, AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase } from 'lucide-react';
+import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase } from 'lucide-react';
 
 interface ExecutiveDashboardProps {
   projects: Project[];

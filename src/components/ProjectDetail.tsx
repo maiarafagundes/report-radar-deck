@@ -2,7 +2,7 @@ import { Project } from '@/types/project';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
-import ProjectCharts from './ProjectCharts';
+
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
 import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,12 +74,6 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
             </span>
           ))}
         </div>
-      </div>
-
-      {/* Charts */}
-      <div>
-        <h2 className="text-lg font-bold text-foreground mb-3">Métricas & Gráficos</h2>
-        <ProjectCharts reports={project.weeklyReports} />
       </div>
 
       {/* Team */}

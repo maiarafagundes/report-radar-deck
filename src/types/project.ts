@@ -1,5 +1,5 @@
 export type ProjectStatus = 'on-track' | 'delayed' | 'at-risk' | 'completed';
-export type ProjectType = 'operacao' | 'projeto';
+export type ProjectType = 'operacao' | 'projeto' | 'sustentacao' | 'dedicado';
 
 export interface TeamMember {
   id: string;

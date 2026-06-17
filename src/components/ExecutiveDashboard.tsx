@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Project, Professional } from '@/types/project';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase } from 'lucide-react';
+import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck } from 'lucide-react';
 
 interface ExecutiveDashboardProps {
   projects: Project[];
@@ -22,6 +22,8 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
     const byType = {
       operacao: projects.filter(p => p.type === 'operacao'),
       projeto: projects.filter(p => p.type === 'projeto'),
+      sustentacao: projects.filter(p => p.type === 'sustentacao'),
+      dedicado: projects.filter(p => p.type === 'dedicado'),
     };
 
     const stable = projects.filter(p => p.status === 'on-track' || p.status === 'completed');
@@ -55,39 +57,68 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
     return { clients, sortedTags, byType, stable, atRisk, critical, categoryData, situationData, uniqueMembers: Array.from(uniqueMembers.values()) };
   }, [projects]);
 
+  const getTypeLabel = (type: Project['type']) => {
+    switch (type) {
+      case 'operacao': return 'Operação';
+      case 'sustentacao': return 'Sustentação';
+      case 'dedicado': return 'Dedicado';
+      default: return 'Projeto';
+    }
+  };
+
   return (
     <div className="space-y-6 animate-slide-in">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="glass-card p-4 text-center">
-          <FolderKanban className="mx-auto h-5 w-5 text-primary mb-1" />
-          <p className="text-2xl font-bold text-foreground">{projects.length}</p>
-          <p className="text-xs text-muted-foreground">Total</p>
+      {/* Modelos de Atendimento */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Modelos de Atendimento</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="glass-card p-4 text-center">
+            <FolderKanban className="mx-auto h-5 w-5 text-primary mb-1" />
+            <p className="text-2xl font-bold text-foreground">{projects.length}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <Briefcase className="mx-auto h-5 w-5 text-primary mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.byType.projeto.length}</p>
+            <p className="text-xs text-muted-foreground">Projetos</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <Wrench className="mx-auto h-5 w-5 text-primary mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.byType.operacao.length}</p>
+            <p className="text-xs text-muted-foreground">Operações</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <ShieldCheck className="mx-auto h-5 w-5 text-primary mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.byType.sustentacao.length}</p>
+            <p className="text-xs text-muted-foreground">Sustentação</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <UserCheck className="mx-auto h-5 w-5 text-primary mb-1" />
+            <p className="text-2xl font-bold text-foreground">{stats.byType.dedicado.length}</p>
+            <p className="text-xs text-muted-foreground">Dedicado (Body Shop)</p>
+          </div>
         </div>
-        <div className="glass-card p-4 text-center">
-          <Briefcase className="mx-auto h-5 w-5 text-primary mb-1" />
-          <p className="text-2xl font-bold text-foreground">{stats.byType.projeto.length}</p>
-          <p className="text-xs text-muted-foreground">Projetos</p>
-        </div>
-        <div className="glass-card p-4 text-center">
-          <Wrench className="mx-auto h-5 w-5 text-primary mb-1" />
-          <p className="text-2xl font-bold text-foreground">{stats.byType.operacao.length}</p>
-          <p className="text-xs text-muted-foreground">Operações</p>
-        </div>
-        <div className="glass-card p-4 text-center">
-          <CheckCircle className="mx-auto h-5 w-5 text-success mb-1" />
-          <p className="text-2xl font-bold text-success">{stats.stable.length}</p>
-          <p className="text-xs text-muted-foreground">Estáveis</p>
-        </div>
-        <div className="glass-card p-4 text-center">
-          <AlertTriangle className="mx-auto h-5 w-5 text-warning mb-1" />
-          <p className="text-2xl font-bold text-warning">{stats.atRisk.length}</p>
-          <p className="text-xs text-muted-foreground">Em Risco</p>
-        </div>
-        <div className="glass-card p-4 text-center">
-          <AlertCircle className="mx-auto h-5 w-5 text-danger mb-1" />
-          <p className="text-2xl font-bold text-danger">{stats.critical.length}</p>
-          <p className="text-xs text-muted-foreground">Críticos</p>
+      </div>
+
+      {/* Situação */}
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Situação</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+          <div className="glass-card p-4 text-center">
+            <CheckCircle className="mx-auto h-5 w-5 text-success mb-1" />
+            <p className="text-2xl font-bold text-success">{stats.stable.length}</p>
+            <p className="text-xs text-muted-foreground">Estáveis</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <AlertTriangle className="mx-auto h-5 w-5 text-warning mb-1" />
+            <p className="text-2xl font-bold text-warning">{stats.atRisk.length}</p>
+            <p className="text-xs text-muted-foreground">Em Risco</p>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <AlertCircle className="mx-auto h-5 w-5 text-danger mb-1" />
+            <p className="text-2xl font-bold text-danger">{stats.critical.length}</p>
+            <p className="text-xs text-muted-foreground">Críticos</p>
+          </div>
         </div>
       </div>
 
@@ -137,7 +168,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-danger/5 border border-danger/20 p-3 hover:bg-danger/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>
@@ -156,7 +187,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-warning/5 border border-warning/20 p-3 hover:bg-warning/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>
@@ -175,7 +206,7 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
               <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-success/5 border border-success/20 p-3 hover:bg-success/10 transition-colors">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{p.type === 'operacao' ? 'Operação' : 'Projeto'}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
               </button>

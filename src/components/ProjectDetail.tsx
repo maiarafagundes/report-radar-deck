@@ -1,23 +1,27 @@
-import { Project } from '@/types/project';
+import { useState } from 'react';
+import { Project, WeeklyReport } from '@/types/project';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle, Plus, Activity, ListTodo, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProjectPDF } from '@/lib/pdfExport';
+import NewWeeklyReportModal from './NewWeeklyReportModal';
 
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
   onMemberClick?: (name: string) => void;
+  onAddReport?: (projectId: string, report: WeeklyReport) => void;
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
+  const [reportOpen, setReportOpen] = useState(false);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -86,7 +90,13 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
 
       {/* Weekly Reports */}
       <div>
-        <h2 className="text-lg font-bold text-foreground mb-3">Histórico de Reports</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-foreground">Histórico de Reports</h2>
+          <Button size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Cadastrar Status Semanal
+          </Button>
+        </div>
         <div className="space-y-3">
           {project.weeklyReports.map(report => (
             <div key={report.id} className="glass-card p-4">
@@ -98,12 +108,15 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
                   <StatusBadge status={report.status} size="sm" />
                 </div>
               </div>
-              <p className="text-sm text-foreground mb-3">{report.summary}</p>
+              <div className="mb-3">
+                <p className="text-xs font-medium text-muted-foreground mb-1">1. Resumo da semana</p>
+                <p className="text-sm text-foreground">{report.summary}</p>
+              </div>
               
               {report.highlights.length > 0 && (
-                <div className="mb-2">
+                <div className="mb-3">
                   <p className="text-xs font-medium text-success mb-1 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" /> Destaques
+                    <CheckCircle className="h-3 w-3" /> 2. Entregas / Destaques
                   </p>
                   <ul className="space-y-0.5">
                     {report.highlights.map((h, i) => (
@@ -113,10 +126,23 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
                 </div>
               )}
 
+              {report.inProgress && report.inProgress.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-primary mb-1 flex items-center gap-1">
+                    <Activity className="h-3 w-3" /> 3. Em andamento
+                  </p>
+                  <ul className="space-y-0.5">
+                    {report.inProgress.map((h, i) => (
+                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {report.blockers.length > 0 && (
-                <div>
+                <div className="mb-3">
                   <p className="text-xs font-medium text-danger mb-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Blockers
+                    <AlertTriangle className="h-3 w-3" /> 4. Riscos / Bloqueios
                   </p>
                   <ul className="space-y-0.5">
                     {report.blockers.map((b, i) => (
@@ -125,10 +151,42 @@ const ProjectDetail = ({ project, onBack, onMemberClick }: ProjectDetailProps) =
                   </ul>
                 </div>
               )}
+
+              {report.nextSteps && report.nextSteps.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-xs font-medium text-warning mb-1 flex items-center gap-1">
+                    <ListTodo className="h-3 w-3" /> 5. Próximos passos
+                  </p>
+                  <ul className="space-y-0.5">
+                    {report.nextSteps.map((h, i) => (
+                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {report.indicators && report.indicators.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-foreground mb-1 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> 6. Indicadores
+                  </p>
+                  <ul className="space-y-0.5">
+                    {report.indicators.map((h, i) => (
+                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
+
+      <NewWeeklyReportModal
+        isOpen={reportOpen}
+        onClose={() => setReportOpen(false)}
+        onCreate={(report) => onAddReport?.(project.id, report)}
+      />
     </div>
   );
 };

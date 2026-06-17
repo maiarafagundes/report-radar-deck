@@ -116,7 +116,17 @@ const UploadModal = ({ isOpen, onClose, onUpload }: UploadModalProps) => {
           const tags = String(row['tags'] || row['Tags'] || '').split(';').map(s => s.trim()).filter(Boolean);
 
           const rawType = String(row['tipo'] || row['type'] || row['Tipo'] || 'projeto').toLowerCase().trim();
-          const projectType = (rawType === 'operacao' || rawType === 'operação' || rawType === 'sustentacao' || rawType === 'sustentação') ? 'operacao' as const : 'projeto' as const;
+          const typeMap: Record<string, 'projeto' | 'operacao' | 'sustentacao' | 'dedicado'> = {
+            'projeto': 'projeto',
+            'operacao': 'operacao',
+            'operação': 'operacao',
+            'sustentacao': 'sustentacao',
+            'sustentação': 'sustentacao',
+            'dedicado': 'dedicado',
+            'bodyshop': 'dedicado',
+            'body shop': 'dedicado',
+          };
+          const projectType = typeMap[rawType] || 'projeto';
 
           projects.push({
             id: projectId,

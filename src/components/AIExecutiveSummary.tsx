@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Project } from '@/types/project';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -42,9 +42,20 @@ const AIExecutiveSummary = ({ projects }: Props) => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  const [autoUpdate, setAutoUpdate] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFingerprintRef = useRef<string>('');
 
-  const generate = async () => {
-    setLoading(true);
+  const fingerprint = useMemo(
+    () => projects
+      .map(p => `${p.id}:${p.status}:${p.progress}:${p.weeklyReports?.length ?? 0}`)
+      .join('|'),
+    [projects]
+  );
+
+  const generate = async (silent = false) => {
+    if (!projects.length) return;
+    if (!silent) setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('executive-summary', {
         body: { projects },
@@ -53,15 +64,27 @@ const AIExecutiveSummary = ({ projects }: Props) => {
       if (data?.error) throw new Error(data.error);
       setSummary(data as Summary);
       setGeneratedAt(new Date());
+      lastFingerprintRef.current = fingerprint;
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.includes('429')) toast.error('Limite de requisições atingido. Tente novamente em instantes.');
       else if (msg.includes('402')) toast.error('Créditos de IA esgotados. Adicione créditos no workspace.');
-      else toast.error('Falha ao gerar status executivo: ' + msg);
+      else if (!silent) toast.error('Falha ao gerar status executivo: ' + msg);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+
+  // Auto-regenerate when project data changes (debounced)
+  useEffect(() => {
+    if (!autoUpdate) return;
+    if (!projects.length) return;
+    if (fingerprint === lastFingerprintRef.current) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { generate(true); }, 1500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fingerprint, autoUpdate]);
 
   return (
     <div className="glass-card p-5 border border-primary/20">
@@ -71,17 +94,37 @@ const AIExecutiveSummary = ({ projects }: Props) => {
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Status Executivo Consolidado</h2>
+            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+              Status Executivo Consolidado
+              {autoUpdate && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-success/10 text-success border border-success/30">
+                  Auto
+                </span>
+              )}
+            </h2>
             <p className="text-xs text-muted-foreground">
               Análise inteligente de {projects.length} projetos com IA
-              {generatedAt && ` · Gerado ${generatedAt.toLocaleTimeString('pt-BR')}`}
+              {generatedAt && ` · Atualizado ${generatedAt.toLocaleTimeString('pt-BR')}`}
             </p>
           </div>
         </div>
-        <Button size="sm" onClick={generate} disabled={loading} className="gap-2">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : summary ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-          {loading ? 'Analisando...' : summary ? 'Atualizar' : 'Gerar análise'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAutoUpdate(v => !v)}
+            className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border transition-colors ${
+              autoUpdate
+                ? 'bg-success/10 text-success border-success/30 hover:bg-success/20'
+                : 'bg-secondary text-muted-foreground border-border hover:bg-secondary/80'
+            }`}
+            title="Liga/desliga atualização automática quando dados mudam"
+          >
+            Auto {autoUpdate ? 'ON' : 'OFF'}
+          </button>
+          <Button size="sm" onClick={() => generate(false)} disabled={loading} className="gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : summary ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+            {loading ? 'Analisando...' : summary ? 'Atualizar' : 'Gerar análise'}
+          </Button>
+        </div>
       </div>
 
       {!summary && !loading && (

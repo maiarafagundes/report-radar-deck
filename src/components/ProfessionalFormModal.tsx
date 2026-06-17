@@ -21,7 +21,6 @@ const blank = {
   role: '',
   seniority: 'Pleno' as TeamMember['seniority'],
   resumo: '',
-  softSkills: '',
   certifications: '',
 };
 
@@ -45,7 +44,7 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props
         role: form.role.trim(),
         seniority: form.seniority,
         resumo: form.resumo.trim(),
-        softSkills: form.softSkills.split(';').map(s => s.trim()).filter(Boolean),
+        softSkills: [],
         certifications: form.certifications.split(';').map(s => s.trim()).filter(Boolean),
         skills: [],
         projectHistory: [],
@@ -95,15 +94,6 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props
               onChange={e => setForm({ ...form, resumo: e.target.value })}
               placeholder="Profissional proativo com forte capacidade de comunicação..."
               rows={3}
-            />
-          </div>
-
-          <div>
-            <Label className="text-xs">Soft Skills <span className="text-muted-foreground">(separadas por ;)</span></Label>
-            <Input
-              value={form.softSkills}
-              onChange={e => setForm({ ...form, softSkills: e.target.value })}
-              placeholder="Liderança; Comunicação; Mentoria"
             />
           </div>
 

@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Project, Professional } from '@/types/project';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck } from 'lucide-react';
+import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck, X } from 'lucide-react';
 import AIExecutiveSummary from './AIExecutiveSummary';
 import LiveStatusBoard from './LiveStatusBoard';
 
@@ -13,6 +13,31 @@ interface ExecutiveDashboardProps {
 }
 
 const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onProjectClick }: ExecutiveDashboardProps) => {
+  const [selectedSituation, setSelectedSituation] = useState<null | 'stable' | 'atRisk' | 'critical'>(null);
+
+  const situationStyles = {
+    success: {
+      text: 'text-success',
+      icon: 'text-success',
+      activeRing: 'ring-2 ring-success/40 border-success/50',
+      hoverBorder: 'hover:border-success/40',
+      cardBg: 'bg-success/5 border-success/20 hover:bg-success/10',
+    },
+    warning: {
+      text: 'text-warning',
+      icon: 'text-warning',
+      activeRing: 'ring-2 ring-warning/40 border-warning/50',
+      hoverBorder: 'hover:border-warning/40',
+      cardBg: 'bg-warning/5 border-warning/20 hover:bg-warning/10',
+    },
+    danger: {
+      text: 'text-danger',
+      icon: 'text-danger',
+      activeRing: 'ring-2 ring-danger/40 border-danger/50',
+      hoverBorder: 'hover:border-danger/40',
+      cardBg: 'bg-danger/5 border-danger/20 hover:bg-danger/10',
+    },
+  } as const;
   const stats = useMemo(() => {
     const clients = [...new Set(projects.map(p => p.name))];
     const tags = projects.reduce<Record<string, number>>((acc, p) => {
@@ -108,22 +133,75 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Situação</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
-          <div className="glass-card p-4 text-center">
-            <CheckCircle className="mx-auto h-5 w-5 text-success mb-1" />
-            <p className="text-2xl font-bold text-success">{stats.stable.length}</p>
-            <p className="text-xs text-muted-foreground">Estáveis</p>
-          </div>
-          <div className="glass-card p-4 text-center">
-            <AlertTriangle className="mx-auto h-5 w-5 text-warning mb-1" />
-            <p className="text-2xl font-bold text-warning">{stats.atRisk.length}</p>
-            <p className="text-xs text-muted-foreground">Em Risco</p>
-          </div>
-          <div className="glass-card p-4 text-center">
-            <AlertCircle className="mx-auto h-5 w-5 text-danger mb-1" />
-            <p className="text-2xl font-bold text-danger">{stats.critical.length}</p>
-            <p className="text-xs text-muted-foreground">Críticos</p>
-          </div>
+          {([
+            { key: 'stable',   label: 'Estáveis', count: stats.stable.length,   color: 'success', Icon: CheckCircle },
+            { key: 'atRisk',   label: 'Em Risco', count: stats.atRisk.length,   color: 'warning', Icon: AlertTriangle },
+            { key: 'critical', label: 'Críticos', count: stats.critical.length, color: 'danger',  Icon: AlertCircle },
+          ] as const).map(({ key, label, count, color, Icon }) => {
+            const active = selectedSituation === key;
+            const s = situationStyles[color];
+            return (
+              <button
+                key={key}
+                onClick={() => setSelectedSituation(active ? null : key)}
+                className={`glass-card p-4 text-center transition-all ${s.hoverBorder} hover:-translate-y-0.5 ${active ? s.activeRing : ''}`}
+              >
+                <Icon className={`mx-auto h-5 w-5 ${s.icon} mb-1`} />
+                <p className={`text-2xl font-bold ${s.text}`}>{count}</p>
+                <p className="text-xs text-muted-foreground">{label}</p>
+              </button>
+            );
+          })}
         </div>
+
+        {selectedSituation && (
+          <div className="mt-3 glass-card p-4 animate-slide-in">
+            {(() => {
+              const conf = {
+                stable:   { list: stats.stable,   label: 'Estáveis', color: 'success', Icon: CheckCircle },
+                atRisk:   { list: stats.atRisk,   label: 'Em Risco', color: 'warning', Icon: AlertTriangle },
+                critical: { list: stats.critical, label: 'Críticos', color: 'danger',  Icon: AlertCircle },
+              }[selectedSituation] as { list: Project[]; label: string; color: 'success'|'warning'|'danger'; Icon: typeof CheckCircle };
+              const Icon = conf.Icon;
+              const s = situationStyles[conf.color];
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className={`text-sm font-bold ${s.text} flex items-center gap-2`}>
+                      <Icon className="h-4 w-4" /> {conf.label} ({conf.list.length})
+                    </h3>
+                    <button
+                      onClick={() => setSelectedSituation(null)}
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Fechar"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {conf.list.length === 0 ? (
+                    <p className="text-xs text-muted-foreground py-3 text-center">Nenhum projeto nesta situação.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {conf.list.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => onProjectClick(p.id)}
+                          className={`text-left rounded-lg border p-3 transition-colors ${s.cardBg}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-medium text-foreground truncate">{p.name}</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground shrink-0">{getTypeLabel(p.type)}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -156,65 +234,6 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
                 <Bar dataKey="value" fill="hsl(213, 94%, 58%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* Projects by situation */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Critical */}
-        <div className="glass-card p-4">
-          <h3 className="text-sm font-bold text-danger mb-3 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" /> Críticos ({stats.critical.length})
-          </h3>
-          <div className="space-y-2">
-            {stats.critical.map(p => (
-              <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-danger/5 border border-danger/20 p-3 hover:bg-danger/10 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
-              </button>
-            ))}
-            {stats.critical.length === 0 && <p className="text-xs text-muted-foreground">Nenhum</p>}
-          </div>
-        </div>
-
-        {/* At Risk */}
-        <div className="glass-card p-4">
-          <h3 className="text-sm font-bold text-warning mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" /> Em Risco ({stats.atRisk.length})
-          </h3>
-          <div className="space-y-2">
-            {stats.atRisk.map(p => (
-              <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-warning/5 border border-warning/20 p-3 hover:bg-warning/10 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
-              </button>
-            ))}
-            {stats.atRisk.length === 0 && <p className="text-xs text-muted-foreground">Nenhum</p>}
-          </div>
-        </div>
-
-        {/* Stable */}
-        <div className="glass-card p-4">
-          <h3 className="text-sm font-bold text-success mb-3 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" /> Estáveis ({stats.stable.length})
-          </h3>
-          <div className="space-y-2">
-            {stats.stable.map(p => (
-              <button key={p.id} onClick={() => onProjectClick(p.id)} className="w-full text-left rounded-lg bg-success/5 border border-success/20 p-3 hover:bg-success/10 transition-colors">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">{p.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{getTypeLabel(p.type)}</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{p.category} · {p.progress}%</p>
-              </button>
-            ))}
           </div>
         </div>
       </div>

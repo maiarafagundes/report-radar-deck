@@ -24,7 +24,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team';
 
 const Index = () => {
-  const { projects, loading: loadingProjects, reload: reloadProjects, createProject, addReport, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, addReport, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals } = useProfessionalsDb();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);

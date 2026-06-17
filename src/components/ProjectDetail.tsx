@@ -5,7 +5,7 @@ import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle, Plus, Activity, ListTodo, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
@@ -122,70 +122,6 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectD
                 <p className="text-sm text-foreground">{report.summary}</p>
               </div>
               
-              {report.highlights.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-success mb-1 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3" /> 2. Entregas / Destaques
-                  </p>
-                  <ul className="space-y-0.5">
-                    {report.highlights.map((h, i) => (
-                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {report.inProgress && report.inProgress.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-primary mb-1 flex items-center gap-1">
-                    <Activity className="h-3 w-3" /> 3. Em andamento
-                  </p>
-                  <ul className="space-y-0.5">
-                    {report.inProgress.map((h, i) => (
-                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {report.blockers.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-danger mb-1 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> 4. Riscos / Bloqueios
-                  </p>
-                  <ul className="space-y-0.5">
-                    {report.blockers.map((b, i) => (
-                      <li key={i} className="text-xs text-muted-foreground pl-4">• {b}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {report.nextSteps && report.nextSteps.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs font-medium text-warning mb-1 flex items-center gap-1">
-                    <ListTodo className="h-3 w-3" /> 5. Próximos passos
-                  </p>
-                  <ul className="space-y-0.5">
-                    {report.nextSteps.map((h, i) => (
-                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {report.indicators && report.indicators.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-foreground mb-1 flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> 6. Indicadores
-                  </p>
-                  <ul className="space-y-0.5">
-                    {report.indicators.map((h, i) => (
-                      <li key={i} className="text-xs text-muted-foreground pl-4">• {h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           ))}
         </div>

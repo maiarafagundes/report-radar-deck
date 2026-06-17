@@ -3,7 +3,9 @@ import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 import { formatDate, getDaysRemaining, getProjectTimelinePercent } from '@/lib/projectUtils';
-import { Calendar, Clock, Tag } from 'lucide-react';
+import { Calendar, Clock, Tag, Download, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { generateProjectPDF } from '@/lib/pdfExport';
 
 interface ProjectCardProps {
   project: Project;
@@ -13,6 +15,8 @@ interface ProjectCardProps {
 const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
+  const latestReport = project.weeklyReports?.[0];
+  const reportsCount = project.weeklyReports?.length || 0;
 
   return (
     <div
@@ -34,6 +38,44 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{project.description}</p>
 
       <ProgressBar progress={project.progress} timelinePercent={timelinePercent} />
+
+      {/* Histórico Resumido */}
+      <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <FileText className="h-3.5 w-3.5 text-primary" />
+            Histórico Resumido
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">
+            {reportsCount} {reportsCount === 1 ? 'report' : 'reports'}
+          </span>
+        </div>
+        {latestReport ? (
+          <div className="space-y-1.5">
+            <p className="text-[11px] font-mono text-muted-foreground">
+              {formatDate(latestReport.weekStart)} — {formatDate(latestReport.weekEnd)}
+            </p>
+            <p className="text-xs text-foreground line-clamp-2">{latestReport.summary}</p>
+            <div className="flex flex-wrap gap-3 pt-1 text-[10px] text-muted-foreground">
+              <span>✓ {latestReport.metrics.tasksCompleted}/{latestReport.metrics.tasksTotal} tarefas</span>
+              <span>🚀 {latestReport.metrics.deploymentsCount} deploys</span>
+              <span>⚠ {latestReport.metrics.incidentsResolved} incidentes</span>
+              <span>⏱ {latestReport.metrics.uptimePercent}% uptime</span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs italic text-muted-foreground">Nenhum status semanal cadastrado.</p>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-3 w-full gap-2 h-7 text-xs"
+          onClick={(e) => { e.stopPropagation(); generateProjectPDF(project); }}
+        >
+          <Download className="h-3 w-3" />
+          Exportar PDF
+        </Button>
+      </div>
 
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">

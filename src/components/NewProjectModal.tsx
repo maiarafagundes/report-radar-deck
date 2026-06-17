@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getProjectTimelinePercent } from '@/lib/projectUtils';
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -35,13 +36,14 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [progress, setProgress] = useState(0);
   const [tags, setTags] = useState('');
+
+  const computedProgress = startDate && endDate ? getProjectTimelinePercent(startDate, endDate) : 0;
 
   const reset = () => {
     setName(''); setCategory('Infrastructure'); setType('projeto');
     setStatus('on-track'); setDescription(''); setStartDate('');
-    setEndDate(''); setProgress(0); setTags('');
+    setEndDate(''); setTags('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,7 +58,7 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
       status,
       startDate,
       endDate,
-      progress: Math.max(0, Math.min(100, progress)),
+      progress: getProjectTimelinePercent(startDate, endDate),
       team: [],
       weeklyReports: [],
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -110,8 +112,8 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
               </Select>
             </div>
             <div>
-              <Label>Progresso (%)</Label>
-              <Input type="number" min={0} max={100} value={progress} onChange={(e) => setProgress(Number(e.target.value))} />
+              <Label>Progresso (auto)</Label>
+              <Input value={`${computedProgress}%`} disabled className="bg-secondary" />
             </div>
             <div>
               <Label>Data de Início *</Label>

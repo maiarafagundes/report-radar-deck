@@ -1,1 +1,4 @@
 project_id = "ptygtpizvgtzlhmxpwpb"
+
+[functions.executive-summary]
+verify_jwt = false

@@ -32,6 +32,25 @@ export function useProjectsDb() {
 
   useEffect(() => { reload(); }, [reload]);
 
+  // Realtime: re-fetch on any change to projects/team/reports
+  useEffect(() => {
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const trigger = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => { reload(); }, 250);
+    };
+    const channel = supabase
+      .channel('projects-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_reports' }, trigger)
+      .subscribe();
+    return () => {
+      if (debounce) clearTimeout(debounce);
+      supabase.removeChannel(channel);
+    };
+  }, [reload]);
+
   const createProject = useCallback(async (p: Project) => {
     const { error } = await supabase.from('projects').insert(mapProjectToDb(p));
     if (error) throw error;

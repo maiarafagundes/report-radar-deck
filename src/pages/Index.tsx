@@ -10,6 +10,7 @@ import ProfessionalModal from '@/components/ProfessionalModal';
 import TeamTab from '@/components/TeamTab';
 import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
+import ThemeToggle from '@/components/ThemeToggle';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus } from 'lucide-react';
@@ -111,12 +112,15 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-6xl px-4 py-6">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <Activity className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Status Report Dashboard</h1>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <Activity className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold text-foreground">Status Report Dashboard</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">DevOps & SRE — Relatório semanal de projetos</p>
           </div>
-          <p className="text-sm text-muted-foreground">DevOps & SRE — Relatório semanal de projetos</p>
+          <ThemeToggle />
         </div>
 
         {/* Tabs */}

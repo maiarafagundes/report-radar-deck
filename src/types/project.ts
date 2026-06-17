@@ -17,6 +17,9 @@ export interface WeeklyReport {
   summary: string;
   highlights: string[];
   blockers: string[];
+  inProgress?: string[];
+  nextSteps?: string[];
+  indicators?: string[];
   metrics: {
     tasksCompleted: number;
     tasksTotal: number;

@@ -9,13 +9,15 @@ import { WeeklyReport, ProjectStatus } from '@/types/project';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (report: WeeklyReport) => void;
+  onCreate: (report: WeeklyReport, projectId?: string) => void;
+  projects?: { id: string; name: string }[];
 }
 
 const toBullets = (text: string) =>
   text.split('\n').map(s => s.replace(/^[\s•\-*]+/, '').trim()).filter(Boolean);
 
-const NewWeeklyReportModal = ({ isOpen, onClose, onCreate }: Props) => {
+const NewWeeklyReportModal = ({ isOpen, onClose, onCreate, projects }: Props) => {
+  const [projectId, setProjectId] = useState('');
   const [weekStart, setWeekStart] = useState('');
   const [weekEnd, setWeekEnd] = useState('');
   const [status, setStatus] = useState<ProjectStatus>('on-track');
@@ -27,13 +29,14 @@ const NewWeeklyReportModal = ({ isOpen, onClose, onCreate }: Props) => {
   const [indicators, setIndicators] = useState('');
 
   const reset = () => {
-    setWeekStart(''); setWeekEnd(''); setStatus('on-track');
+    setProjectId(''); setWeekStart(''); setWeekEnd(''); setStatus('on-track');
     setSummary(''); setHighlights(''); setInProgress('');
     setBlockers(''); setNextSteps(''); setIndicators('');
   };
 
   const handleSubmit = () => {
     if (!weekStart || !weekEnd || !summary.trim()) return;
+    if (projects && !projectId) return;
     const report: WeeklyReport = {
       id: `wr-${Date.now()}`,
       weekStart,
@@ -50,7 +53,7 @@ const NewWeeklyReportModal = ({ isOpen, onClose, onCreate }: Props) => {
         incidentsResolved: 0, deploymentsCount: 0, uptimePercent: 100,
       },
     };
-    onCreate(report);
+    onCreate(report, projectId || undefined);
     reset();
     onClose();
   };
@@ -63,6 +66,21 @@ const NewWeeklyReportModal = ({ isOpen, onClose, onCreate }: Props) => {
         </DialogHeader>
 
         <div className="space-y-4">
+          {projects && (
+            <div>
+              <Label>Projeto *</Label>
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Selecione um projeto...</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Início da Semana *</Label>

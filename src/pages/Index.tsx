@@ -12,9 +12,10 @@ import AllocationTab from '@/components/AllocationTab';
 import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
+import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge } from 'lucide-react';
+import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge, FileText } from 'lucide-react';
 
 const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Todos', value: 'all' },
@@ -36,6 +37,7 @@ const Index = () => {
   const [dateTo, setDateTo] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [weeklyReportOpen, setWeeklyReportOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>('dashboard');
 
   useEffect(() => {
@@ -176,6 +178,10 @@ const Index = () => {
             <Upload className="h-4 w-4" />
             Upload
           </Button>
+          <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
+            <FileText className="h-4 w-4" />
+            Cadastrar Status Semanal
+          </Button>
         </div>
 
         {activeTab === 'dashboard' && (
@@ -270,6 +276,12 @@ const Index = () => {
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
         onCreate={(p) => { createProject(p); }}
+      />
+      <NewWeeklyReportModal
+        isOpen={weeklyReportOpen}
+        onClose={() => setWeeklyReportOpen(false)}
+        projects={projects.map(p => ({ id: p.id, name: p.name }))}
+        onCreate={(report, projectId) => { if (projectId) addReport(projectId, report); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
     </div>

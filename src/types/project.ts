@@ -7,6 +7,7 @@ export interface TeamMember {
   role: string;
   seniority: 'Junior' | 'Pleno' | 'Senior' | 'Lead' | 'Staff' | 'Principal';
   avatar?: string;
+  allocationPercent?: number;
 }
 
 export interface WeeklyReport {

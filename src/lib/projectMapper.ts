@@ -49,11 +49,26 @@ export function mapReportToDb(projectId: string, r: WeeklyReport) {
 }
 
 export function mapTeamFromDb(t: DbTeam): TeamMember {
-  return { id: t.id, name: t.name, role: t.role, seniority: t.seniority, avatar: t.avatar ?? undefined };
+  return {
+    id: t.id,
+    name: t.name,
+    role: t.role,
+    seniority: t.seniority,
+    avatar: t.avatar ?? undefined,
+    allocationPercent: typeof t.allocation_percent === 'number' ? t.allocation_percent : 100,
+  };
 }
 
 export function mapTeamToDb(projectId: string, m: TeamMember) {
-  return { id: m.id, project_id: projectId, name: m.name, role: m.role, seniority: m.seniority, avatar: m.avatar ?? null };
+  return {
+    id: m.id,
+    project_id: projectId,
+    name: m.name,
+    role: m.role,
+    seniority: m.seniority,
+    avatar: m.avatar ?? null,
+    allocation_percent: m.allocationPercent ?? 100,
+  };
 }
 
 export function mapProjectFromDb(p: DbProject, team: DbTeam[] = [], reports: DbReport[] = []): Project {

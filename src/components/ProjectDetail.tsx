@@ -7,7 +7,7 @@ import TeamList from './TeamList';
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
 import { ArrowLeft, Calendar, Clock, Download, Tag, AlertTriangle, CheckCircle, Plus, Activity, ListTodo, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { generateProjectPDF } from '@/lib/pdfExport';
+import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
 
 interface ProjectDetailProps {
@@ -107,6 +107,15 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport }: ProjectD
                   </span>
                   <StatusBadge status={report.status} size="sm" />
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => generateWeeklyReportPDF(project, report)}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  PDF
+                </Button>
               </div>
               <div className="mb-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">1. Resumo da semana</p>

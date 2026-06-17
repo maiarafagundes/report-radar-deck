@@ -180,6 +180,8 @@ const Index = () => {
             professionals={professionals}
             projects={projects}
             onProfessionalClick={handleProfessionalClick}
+            onCreateProfessional={(pro) => bulkUpsertProfessionals([pro])}
+            onBulkUploadProfessionals={(pros) => bulkUpsertProfessionals(pros)}
           />
         )}
 

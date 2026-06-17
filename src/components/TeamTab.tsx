@@ -1,17 +1,23 @@
 import { Professional, Project } from '@/types/project';
-import { getSeniorityColor } from '@/lib/projectUtils';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, UserPlus, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
+import ProfessionalFormModal from './ProfessionalFormModal';
+import ProfessionalsUploadModal from './ProfessionalsUploadModal';
 
 interface TeamTabProps {
   professionals: Professional[];
   projects: Project[];
   onProfessionalClick: (name: string) => void;
+  onCreateProfessional?: (pro: Professional) => Promise<void> | void;
+  onBulkUploadProfessionals?: (pros: Professional[]) => Promise<void> | void;
 }
 
-const TeamTab = ({ professionals, projects, onProfessionalClick }: TeamTabProps) => {
+const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfessional, onBulkUploadProfessionals }: TeamTabProps) => {
   const [search, setSearch] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const enriched = useMemo(() => {
     return professionals.map(p => {
@@ -36,19 +42,33 @@ const TeamTab = ({ professionals, projects, onProfessionalClick }: TeamTabProps)
     <div className="space-y-4 animate-slide-in">
       {/* Header + Search */}
       <div className="glass-card p-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" />
             <h2 className="text-sm font-bold text-foreground">Equipe ({professionals.length} profissionais)</h2>
           </div>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar profissional..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9 bg-secondary border-border text-sm h-8"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar profissional..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-9 bg-secondary border-border text-sm h-8"
+              />
+            </div>
+            {onBulkUploadProfessionals && (
+              <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={() => setUploadOpen(true)}>
+                <Upload className="h-3.5 w-3.5" />
+                Importar
+              </Button>
+            )}
+            {onCreateProfessional && (
+              <Button size="sm" className="gap-1.5 h-8" onClick={() => setFormOpen(true)}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Novo Profissional
+              </Button>
+            )}
           </div>
         </div>
 
@@ -83,6 +103,21 @@ const TeamTab = ({ professionals, projects, onProfessionalClick }: TeamTabProps)
           </div>
         )}
       </div>
+
+      {onCreateProfessional && (
+        <ProfessionalFormModal
+          isOpen={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSave={onCreateProfessional}
+        />
+      )}
+      {onBulkUploadProfessionals && (
+        <ProfessionalsUploadModal
+          isOpen={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onUpload={onBulkUploadProfessionals}
+        />
+      )}
     </div>
   );
 };

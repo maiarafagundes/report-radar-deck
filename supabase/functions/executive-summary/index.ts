@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
       };
     });
 
-    const systemPrompt = `Você é um analista executivo sênior de DevOps/SRE. Analise o portfólio de projetos e gere um status executivo consolidado em português, objetivo, com tom corporativo. Identifique padrões, riscos sistêmicos, oportunidades e proponha ações práticas. Responda APENAS com JSON válido seguindo o schema solicitado.`;
+    const systemPrompt = `Você é um analista executivo sênior de DevOps/SRE. Analise o portfólio de projetos e gere um status executivo consolidado em português, objetivo, com tom corporativo. Identifique padrões, riscos sistêmicos, oportunidades e proponha ações práticas. Para cada destaque e risco, identifique explicitamente quais projetos estão relacionados. Responda APENAS com JSON válido seguindo o schema solicitado.`;
 
     const userPrompt = `Portfólio (${compact.length} projetos):\n\n${JSON.stringify(compact, null, 2)}\n\nGere um status executivo consolidado.`;
 

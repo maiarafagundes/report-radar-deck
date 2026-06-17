@@ -101,10 +101,10 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Modelos de Atendimento</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="glass-card p-4 text-center">
-            <FolderKanban className="mx-auto h-5 w-5 text-primary mb-1" />
-            <p className="text-2xl font-bold text-foreground">{projects.length}</p>
-            <p className="text-xs text-muted-foreground">Total</p>
+          <div className="glass-card p-5 text-center border border-primary/30 shadow-sm">
+            <FolderKanban className="mx-auto h-6 w-6 text-primary mb-2" />
+            <p className="text-3xl font-extrabold text-foreground">{projects.length}</p>
+            <p className="text-sm text-primary font-medium">Total Projetos</p>
           </div>
           <div className="glass-card p-4 text-center">
             <Briefcase className="mx-auto h-5 w-5 text-primary mb-1" />

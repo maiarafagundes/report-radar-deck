@@ -28,7 +28,7 @@ type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
   const { projects, reload: reloadProjects, createProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
-  const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals } = useProfessionalsDb();
+  const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional } = useProfessionalsDb();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -200,6 +200,7 @@ const Index = () => {
             onProfessionalClick={handleProfessionalClick}
             onCreateProfessional={(pro) => bulkUpsertProfessionals([pro])}
             onBulkUploadProfessionals={(pros) => bulkUpsertProfessionals(pros)}
+            onDeleteProfessional={(id) => deleteProfessional(id)}
           />
         )}
 

@@ -1,5 +1,5 @@
 import { Professional, Project } from '@/types/project';
-import { Users, Search, UserPlus, Upload } from 'lucide-react';
+import { Users, Search, UserPlus, Upload, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
@@ -12,9 +12,10 @@ interface TeamTabProps {
   onProfessionalClick: (name: string) => void;
   onCreateProfessional?: (pro: Professional) => Promise<void> | void;
   onBulkUploadProfessionals?: (pros: Professional[]) => Promise<void> | void;
+  onDeleteProfessional?: (id: string) => Promise<void> | void;
 }
 
-const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfessional, onBulkUploadProfessionals }: TeamTabProps) => {
+const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfessional, onBulkUploadProfessionals, onDeleteProfessional }: TeamTabProps) => {
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -77,21 +78,40 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
           {filtered.map(prof => {
             const initials = prof.name.split(' ').map(n => n[0]).join('').slice(0, 2);
             return (
-              <button
+              <div
                 key={prof.id}
-                onClick={() => onProfessionalClick(prof.name)}
-                className="flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2.5 text-left hover:bg-secondary transition-colors"
+                className="group flex items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2.5 hover:bg-secondary transition-colors"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary shrink-0">
-                  {initials}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{prof.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {prof.role} · {prof.projectCount} projeto(s)
-                  </p>
-                </div>
-              </button>
+                <button
+                  onClick={() => onProfessionalClick(prof.name)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-sm font-bold text-primary shrink-0">
+                    {initials}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">{prof.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {prof.role} · {prof.projectCount} projeto(s)
+                    </p>
+                  </div>
+                </button>
+                {onDeleteProfessional && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const msg = prof.projectCount > 0
+                        ? `${prof.name} está atrelado a ${prof.projectCount} projeto(s). Remover assim mesmo?`
+                        : `Remover ${prof.name}?`;
+                      if (confirm(msg)) onDeleteProfessional(prof.id);
+                    }}
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remover profissional"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>

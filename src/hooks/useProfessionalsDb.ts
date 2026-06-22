@@ -25,5 +25,11 @@ export function useProfessionalsDb() {
     await reload();
   }, [reload]);
 
-  return { professionals, loading, reload, bulkUpsert };
+  const deleteProfessional = useCallback(async (id: string) => {
+    const { error } = await supabase.from('professionals').delete().eq('id', id);
+    if (error) throw error;
+    await reload();
+  }, [reload]);
+
+  return { professionals, loading, reload, bulkUpsert, deleteProfessional };
 }

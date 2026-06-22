@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { UserCheck, UserX, Inbox, Loader2 } from 'lucide-react';
+import { useProfessionalsDb } from '@/hooks/useProfessionalsDb';
 
 interface PendingProfile {
   id: string;
@@ -16,7 +18,9 @@ export default function PendingRequestsPanel({ onApproved }: { onApproved?: () =
   const [items, setItems] = useState<PendingProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [linkChoice, setLinkChoice] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const { professionals } = useProfessionalsDb();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,6 +39,16 @@ export default function PendingRequestsPanel({ onApproved }: { onApproved?: () =
   const decide = async (id: string, status: 'approved' | 'rejected') => {
     setBusyId(id);
     try {
+      if (status === 'approved') {
+        const proId = linkChoice[id];
+        if (!proId) {
+          toast({ title: 'Selecione um profissional', description: 'Vincule um profissional antes de aprovar.', variant: 'destructive' });
+          setBusyId(null);
+          return;
+        }
+        const { error: linkErr } = await supabase.rpc('link_profile_to_professional' as any, { _user_id: id, _professional_id: proId });
+        if (linkErr) throw linkErr;
+      }
       const { error } = await supabase.rpc('set_profile_status' as any, { _user_id: id, _status: status });
       if (error) throw error;
       toast({ title: status === 'approved' ? 'Acesso aprovado' : 'Acesso recusado' });
@@ -58,12 +72,23 @@ export default function PendingRequestsPanel({ onApproved }: { onApproved?: () =
       ) : (
         <ul className="space-y-2">
           {items.map(p => (
-            <li key={p.id} className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-              <div className="min-w-0">
+            <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary/50 px-3 py-2">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{p.full_name || p.email.split('@')[0]}</p>
                 <p className="text-xs text-muted-foreground truncate">{p.email}</p>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
+                <Select
+                  value={linkChoice[p.id] ?? ''}
+                  onValueChange={(v) => setLinkChoice(prev => ({ ...prev, [p.id]: v }))}
+                >
+                  <SelectTrigger className="h-7 w-48 text-xs"><SelectValue placeholder="Vincular profissional..." /></SelectTrigger>
+                  <SelectContent>
+                    {professionals.map(pr => (
+                      <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => decide(p.id, 'rejected')} className="gap-1 h-7">
                   <UserX className="h-3.5 w-3.5" /> Recusar
                 </Button>

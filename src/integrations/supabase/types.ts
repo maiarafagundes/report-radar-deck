@@ -275,6 +275,7 @@ export type Database = {
     }
     Functions: {
       bootstrap_profile: { Args: { _full_name?: string }; Returns: Json }
+      can_access_project: { Args: { _project_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -286,6 +287,7 @@ export type Database = {
         Args: { _professional_id: string; _user_id: string }
         Returns: undefined
       }
+      my_professional_id: { Args: never; Returns: string }
       set_profile_status: {
         Args: { _status: string; _user_id: string }
         Returns: undefined

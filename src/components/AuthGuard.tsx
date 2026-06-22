@@ -2,10 +2,10 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Loader2, Clock, XCircle } from 'lucide-react';
+import { Loader2, Clock, XCircle, UserCog } from 'lucide-react';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, isAdmin, loading, signOut } = useAuth();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -34,6 +34,22 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
           <XCircle className="mx-auto h-10 w-10 text-destructive mb-3" />
           <h2 className="text-lg font-bold mb-2">Acesso negado</h2>
           <p className="text-sm text-muted-foreground mb-6">Sua solicitação de acesso foi rejeitada. Entre em contato com um administrador.</p>
+          <Button variant="outline" onClick={signOut}>Sair</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Profissional aprovado mas ainda sem vínculo a um perfil/projeto
+  if (!isAdmin && profile.status === 'approved' && !profile.professional_id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="glass-card max-w-md p-8 text-center">
+          <UserCog className="mx-auto h-10 w-10 text-warning mb-3" />
+          <h2 className="text-lg font-bold mb-2">Aguardando vinculação</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Seu acesso foi aprovado. Um administrador ainda precisa vincular você a um profissional para liberar os projetos.
+          </p>
           <Button variant="outline" onClick={signOut}>Sair</Button>
         </div>
       </div>

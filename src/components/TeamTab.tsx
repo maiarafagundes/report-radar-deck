@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
 import ProfessionalFormModal from './ProfessionalFormModal';
 import ProfessionalsUploadModal from './ProfessionalsUploadModal';
+import PendingRequestsPanel from './PendingRequestsPanel';
+import { useAuth } from '@/hooks/useAuth';
 
 interface TeamTabProps {
   professionals: Professional[];
@@ -21,6 +23,7 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
   const [formOpen, setFormOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editing, setEditing] = useState<Professional | null>(null);
+  const { isAdmin } = useAuth();
 
   const enriched = useMemo(() => {
     return professionals.map(p => {
@@ -43,6 +46,7 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
 
   return (
     <div className="space-y-4 animate-slide-in">
+      {isAdmin && <PendingRequestsPanel />}
       {/* Header + Search */}
       <div className="glass-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">

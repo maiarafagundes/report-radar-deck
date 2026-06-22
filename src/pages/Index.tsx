@@ -13,9 +13,11 @@ import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
+import FirstTimeProfileSetup from '@/components/FirstTimeProfileSetup';
+import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge, FileText } from 'lucide-react';
+import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge, FileText, LogOut } from 'lucide-react';
 
 const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Todos', value: 'all' },
@@ -29,6 +31,7 @@ type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 const Index = () => {
   const { projects, reload: reloadProjects, createProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
+  const { profile, isAdmin, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,7 +128,19 @@ const Index = () => {
             </div>
             <p className="text-sm text-muted-foreground">DevOps & SRE — Relatório semanal de projetos</p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            {profile && (
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-medium text-foreground">{profile.full_name || profile.email}</p>
+                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : 'Membro'}</p>
+              </div>
+            )}
+            <ThemeToggle />
+            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={signOut}>
+              <LogOut className="h-3.5 w-3.5" />
+              Sair
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -286,6 +301,7 @@ const Index = () => {
         onCreate={(report, projectId) => { if (projectId) addReport(projectId, report); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
+      <FirstTimeProfileSetup />
     </div>
   );
 };

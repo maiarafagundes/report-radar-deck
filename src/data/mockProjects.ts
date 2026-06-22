@@ -14,7 +14,7 @@ export const mockProjects: Project[] = [
     tags: ['CI/CD', 'GitHub Actions', 'Kubernetes'],
     team: [
       { id: 't1', name: 'Ana Silva', role: 'DevOps Engineer', seniority: 'Senior' },
-      { id: 't2', name: 'Carlos Mendes', role: 'SRE', seniority: 'Lead' },
+      { id: 't2', name: 'Carlos Mendes', role: 'SRE', seniority: 'Coordenador' },
       { id: 't3', name: 'Juliana Costa', role: 'Platform Engineer', seniority: 'Pleno' },
       { id: 't4', name: 'Rafael Oliveira', role: 'DevOps Engineer', seniority: 'Junior' },
     ],
@@ -63,7 +63,7 @@ export const mockProjects: Project[] = [
     progress: 38,
     tags: ['Observability', 'Grafana', 'OpenTelemetry'],
     team: [
-      { id: 't5', name: 'Fernando Rocha', role: 'SRE Lead', seniority: 'Lead' },
+      { id: 't5', name: 'Fernando Rocha', role: 'SRE Lead', seniority: 'Coordenador' },
       { id: 't6', name: 'Mariana Santos', role: 'SRE Engineer', seniority: 'Senior' },
       { id: 't7', name: 'Pedro Alves', role: 'Backend Engineer', seniority: 'Senior' },
     ],
@@ -102,7 +102,7 @@ export const mockProjects: Project[] = [
     progress: 45,
     tags: ['Kubernetes', 'Cloud', 'Helm', 'Istio'],
     team: [
-      { id: 't8', name: 'Lucas Ferreira', role: 'Cloud Architect', seniority: 'Staff' },
+      { id: 't8', name: 'Lucas Ferreira', role: 'Cloud Architect', seniority: 'Especialista' },
       { id: 't9', name: 'Beatriz Lima', role: 'DevOps Engineer', seniority: 'Senior' },
       { id: 't10', name: 'Gabriel Souza', role: 'Platform Engineer', seniority: 'Pleno' },
       { id: 't11', name: 'Isabela Nunes', role: 'Security Engineer', seniority: 'Senior' },
@@ -133,7 +133,7 @@ export const mockProjects: Project[] = [
     progress: 20,
     tags: ['DR', 'Automation', 'Runbooks'],
     team: [
-      { id: 't13', name: 'Ricardo Gomes', role: 'SRE Lead', seniority: 'Lead' },
+      { id: 't13', name: 'Ricardo Gomes', role: 'SRE Lead', seniority: 'Coordenador' },
       { id: 't14', name: 'Camila Barros', role: 'SRE Engineer', seniority: 'Pleno' },
     ],
     weeklyReports: [
@@ -164,7 +164,7 @@ export const mockProjects: Project[] = [
       { id: 't15', name: 'Sherllon', role: 'SRE Analyst', seniority: 'Senior' },
       { id: 't16', name: 'Luiz Toniolo', role: 'SRE Engineer', seniority: 'Senior' },
       { id: 't17', name: 'Nicollas Prudêncio', role: 'SRE Analyst', seniority: 'Pleno' },
-      { id: 't18', name: 'Anderson Silva', role: 'SRE Coordinator', seniority: 'Lead' },
+      { id: 't18', name: 'Anderson Silva', role: 'SRE Coordinator', seniority: 'Coordenador' },
       { id: 't19', name: 'Leandro', role: 'SRE Engineer', seniority: 'Junior' },
       { id: 't20', name: 'Caio', role: 'SRE Engineer', seniority: 'Junior' },
     ],
@@ -279,7 +279,7 @@ export const mockProjects: Project[] = [
       { id: 't21', name: 'Bruno Tavares', role: 'DevOps Engineer', seniority: 'Senior' },
       { id: 't22', name: 'Renata Dias', role: 'DevOps Engineer', seniority: 'Pleno' },
       { id: 't23', name: 'Felipe Moraes', role: 'Cloud Engineer', seniority: 'Senior' },
-      { id: 't24', name: 'Tatiane Ribeiro', role: 'DevOps Lead', seniority: 'Lead' },
+      { id: 't24', name: 'Tatiane Ribeiro', role: 'DevOps Lead', seniority: 'Coordenador' },
     ],
     weeklyReports: [
       {
@@ -389,7 +389,7 @@ export const mockProjects: Project[] = [
     progress: 48,
     tags: ['Platform', 'E-commerce', 'APIs', '24/7', 'Performance'],
     team: [
-      { id: 't28', name: 'Marcos Pereira', role: 'Platform Lead', seniority: 'Lead' },
+      { id: 't28', name: 'Marcos Pereira', role: 'Platform Lead', seniority: 'Coordenador' },
       { id: 't29', name: 'Aline Corrêa', role: 'SRE Engineer', seniority: 'Senior' },
       { id: 't30', name: 'João Victor', role: 'DevOps Engineer', seniority: 'Pleno' },
       { id: 't31', name: 'Laura Mendonça', role: 'QA Engineer', seniority: 'Pleno' },

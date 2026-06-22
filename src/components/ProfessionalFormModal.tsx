@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Professional, TeamMember } from '@/types/project';
 import { useToast } from '@/hooks/use-toast';
@@ -15,14 +14,11 @@ interface Props {
   professional?: Professional | null;
 }
 
-const seniorities: TeamMember['seniority'][] = ['Junior', 'Pleno', 'Senior', 'Lead', 'Staff', 'Principal'];
+const cargos: TeamMember['seniority'][] = ['Estagiário', 'Junior', 'Pleno', 'Senior', 'Especialista', 'Coordenador', 'Gerente'];
 
 const blank = {
   name: '',
-  role: '',
-  seniority: 'Pleno' as TeamMember['seniority'],
-  resumo: '',
-  certifications: '',
+  cargo: 'Pleno' as TeamMember['seniority'],
 };
 
 export default function ProfessionalFormModal({ isOpen, onClose, onSave, professional }: Props) {
@@ -36,10 +32,7 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave, profess
     if (professional) {
       setForm({
         name: professional.name,
-        role: professional.role ?? '',
-        seniority: professional.seniority,
-        resumo: professional.resumo ?? '',
-        certifications: (professional.certifications ?? []).join('; '),
+        cargo: (professional.seniority ?? professional.role ?? 'Pleno') as TeamMember['seniority'],
       });
     } else {
       setForm(blank);
@@ -57,11 +50,11 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave, profess
         ...(professional ?? {} as Professional),
         id: professional?.id ?? crypto.randomUUID(),
         name: form.name.trim(),
-        role: form.role.trim(),
-        seniority: form.seniority,
-        resumo: form.resumo.trim(),
+        role: form.cargo,
+        seniority: form.cargo,
+        resumo: professional?.resumo ?? '',
         softSkills: professional?.softSkills ?? [],
-        certifications: form.certifications.split(';').map(s => s.trim()).filter(Boolean),
+        certifications: professional?.certifications ?? [],
         skills: professional?.skills ?? [],
         projectHistory: professional?.projectHistory ?? [],
       };
@@ -83,43 +76,18 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave, profess
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label className="text-xs">Nome completo *</Label>
-              <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ana Silva" />
-            </div>
-            <div>
-              <Label className="text-xs">Cargo</Label>
-              <Input value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} placeholder="DevOps Engineer" />
-            </div>
-            <div>
-              <Label className="text-xs">Senioridade</Label>
-              <Select value={form.seniority} onValueChange={(v) => setForm({ ...form, seniority: v as TeamMember['seniority'] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {seniorities.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div>
-            <Label className="text-xs">Perfil / Resumo</Label>
-            <Textarea
-              value={form.resumo}
-              onChange={e => setForm({ ...form, resumo: e.target.value })}
-              placeholder="Profissional proativo com forte capacidade de comunicação..."
-              rows={3}
-            />
+            <Label className="text-xs">Nome completo *</Label>
+            <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ana Silva" />
           </div>
-
           <div>
-            <Label className="text-xs">Certificações <span className="text-muted-foreground">(separadas por ;)</span></Label>
-            <Input
-              value={form.certifications}
-              onChange={e => setForm({ ...form, certifications: e.target.value })}
-              placeholder="AWS Solutions Architect; CKA; GitHub Actions"
-            />
+            <Label className="text-xs">Cargo *</Label>
+            <Select value={form.cargo} onValueChange={(v) => setForm({ ...form, cargo: v as TeamMember['seniority'] })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {cargos.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

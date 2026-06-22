@@ -1,5 +1,5 @@
 import { Professional, Project } from '@/types/project';
-import { Users, Search, UserPlus, Upload, Trash2 } from 'lucide-react';
+import { Users, Search, UserPlus, Upload, Trash2, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
@@ -13,12 +13,14 @@ interface TeamTabProps {
   onCreateProfessional?: (pro: Professional) => Promise<void> | void;
   onBulkUploadProfessionals?: (pros: Professional[]) => Promise<void> | void;
   onDeleteProfessional?: (id: string) => Promise<void> | void;
+  onUpdateProfessional?: (pro: Professional) => Promise<void> | void;
 }
 
-const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfessional, onBulkUploadProfessionals, onDeleteProfessional }: TeamTabProps) => {
+const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfessional, onBulkUploadProfessionals, onDeleteProfessional, onUpdateProfessional }: TeamTabProps) => {
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [editing, setEditing] = useState<Professional | null>(null);
 
   const enriched = useMemo(() => {
     return professionals.map(p => {
@@ -96,6 +98,15 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
                     </p>
                   </div>
                 </button>
+                {onUpdateProfessional && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setEditing(prof); }}
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Editar profissional"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
                 {onDeleteProfessional && (
                   <button
                     onClick={(e) => {
@@ -129,6 +140,14 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
           isOpen={formOpen}
           onClose={() => setFormOpen(false)}
           onSave={onCreateProfessional}
+        />
+      )}
+      {onUpdateProfessional && (
+        <ProfessionalFormModal
+          isOpen={!!editing}
+          onClose={() => setEditing(null)}
+          onSave={onUpdateProfessional}
+          professional={editing}
         />
       )}
       {onBulkUploadProfessionals && (

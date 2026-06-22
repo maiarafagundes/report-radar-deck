@@ -145,17 +145,19 @@ const Index = () => {
 
         {/* Tabs */}
         <div className="mb-6 flex items-center gap-1 bg-secondary/50 rounded-lg p-1 w-fit">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === 'dashboard'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <BarChart3 className="h-4 w-4" />
-            Resumo Executivo
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'dashboard'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Resumo Executivo
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('projects')}
             className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
@@ -167,39 +169,43 @@ const Index = () => {
             <FolderKanban className="h-4 w-4" />
             Projetos
           </button>
-          <button
-            onClick={() => setActiveTab('team')}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === 'team'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Equipe
-          </button>
-          <button
-            onClick={() => setActiveTab('allocation')}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === 'allocation'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Gauge className="h-4 w-4" />
-            Alocação
-          </button>
-          <Button variant="ghost" size="sm" className="gap-2 ml-2" onClick={() => setUploadOpen(true)}>
-            <Upload className="h-4 w-4" />
-            Upload
-          </Button>
-          <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
-            <FileText className="h-4 w-4" />
-            Cadastrar Status Semanal
-          </Button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('team')}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'team'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                Equipe
+              </button>
+              <button
+                onClick={() => setActiveTab('allocation')}
+                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'allocation'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Gauge className="h-4 w-4" />
+                Alocação
+              </button>
+              <Button variant="ghost" size="sm" className="gap-2 ml-2" onClick={() => setUploadOpen(true)}>
+                <Upload className="h-4 w-4" />
+                Upload
+              </Button>
+              <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
+                <FileText className="h-4 w-4" />
+                Cadastrar Status Semanal
+              </Button>
+            </>
+          )}
         </div>
 
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && isAdmin && (
           <ExecutiveDashboard
             projects={projects}
             professionals={professionals}
@@ -208,7 +214,7 @@ const Index = () => {
           />
         )}
 
-        {activeTab === 'team' && (
+        {activeTab === 'team' && isAdmin && (
           <TeamTab
             professionals={professionals}
             projects={projects}
@@ -220,7 +226,7 @@ const Index = () => {
           />
         )}
 
-        {activeTab === 'allocation' && (
+        {activeTab === 'allocation' && isAdmin && (
           <AllocationTab
             professionals={professionals}
             projects={projects}
@@ -248,10 +254,12 @@ const Index = () => {
                   <span className="text-xs text-muted-foreground">Até:</span>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36 bg-secondary border-border text-sm" />
                 </div>
-                <Button size="sm" className="gap-2" onClick={() => setNewProjectOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                  Cadastrar Projeto
-                </Button>
+                {isAdmin && (
+                  <Button size="sm" className="gap-2" onClick={() => setNewProjectOpen(true)}>
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Projeto
+                  </Button>
+                )}
               </div>
 
               <div className="mt-3 flex gap-2">
@@ -301,7 +309,6 @@ const Index = () => {
         onCreate={(report, projectId) => { if (projectId) addReport(projectId, report); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
-      <FirstTimeProfileSetup />
     </div>
   );
 };

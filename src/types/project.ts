@@ -5,7 +5,7 @@ export interface TeamMember {
   id: string;
   name: string;
   role: string;
-  seniority: 'Junior' | 'Pleno' | 'Senior' | 'Lead' | 'Staff' | 'Principal';
+  seniority: 'Estagiário' | 'Junior' | 'Pleno' | 'Senior' | 'Especialista' | 'Coordenador' | 'Gerente';
   avatar?: string;
   allocationPercent?: number;
 }

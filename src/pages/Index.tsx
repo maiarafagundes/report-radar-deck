@@ -106,9 +106,9 @@ const Index = () => {
             project={selectedProject}
             onBack={() => setSelectedProjectId(null)}
             onMemberClick={handleProfessionalClick}
-            onAddReport={(projectId, report) => { addReport(projectId, report); }}
+            onAddReport={isAdmin ? (projectId, report) => { addReport(projectId, report); } : undefined}
             professionals={professionals}
-            onUpdateTeam={(projectId, team) => setProjectTeam(projectId, team)}
+            onUpdateTeam={isAdmin ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
           />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />

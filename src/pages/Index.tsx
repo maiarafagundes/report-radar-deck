@@ -13,7 +13,6 @@ import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
-import FirstTimeProfileSetup from '@/components/FirstTimeProfileSetup';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -41,13 +40,14 @@ const Index = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [weeklyReportOpen, setWeeklyReportOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabView>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabView>(isAdmin ? 'dashboard' : 'projects');
 
   useEffect(() => {
+    if (!isAdmin) return;
     seedIfEmpty().then(seeded => {
       if (seeded) { reloadProjects(); reloadProfessionals(); }
     });
-  }, [reloadProjects, reloadProfessionals]);
+  }, [reloadProjects, reloadProfessionals, isAdmin]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
@@ -132,7 +132,7 @@ const Index = () => {
             {profile && (
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-medium text-foreground">{profile.full_name || profile.email}</p>
-                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : 'Membro'}</p>
+                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : 'Profissional'}</p>
               </div>
             )}
             <ThemeToggle />

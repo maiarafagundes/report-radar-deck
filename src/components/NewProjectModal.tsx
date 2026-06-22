@@ -50,7 +50,7 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
     e.preventDefault();
     if (!name || !startDate || !endDate) return;
     const project: Project = {
-      id: `proj-${Date.now()}`,
+      id: crypto.randomUUID(),
       name,
       description,
       category,

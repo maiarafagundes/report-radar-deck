@@ -31,7 +31,7 @@ const parseStatus = (value: string): ProjectStatus => {
 };
 
 const parseSeniority = (value: string) => {
-  const valid = ['Junior', 'Pleno', 'Senior', 'Lead', 'Staff', 'Principal'];
+  const valid = ['Junior', 'Pleno', 'Senior', 'Coordenador', 'Especialista', 'Gerente'];
   const found = valid.find(v => v.toLowerCase() === value?.toLowerCase()?.trim());
   return (found || 'Pleno') as TeamMember['seniority'];
 };

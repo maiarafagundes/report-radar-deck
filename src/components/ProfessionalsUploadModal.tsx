@@ -13,7 +13,7 @@ interface Props {
 }
 
 const parseSeniority = (value: string): TeamMember['seniority'] => {
-  const valid: TeamMember['seniority'][] = ['Junior', 'Pleno', 'Senior', 'Lead', 'Staff', 'Principal'];
+  const valid: TeamMember['seniority'][] = ['Junior', 'Pleno', 'Senior', 'Coordenador', 'Especialista', 'Gerente'];
   return valid.find(v => v.toLowerCase() === value?.toLowerCase()?.trim()) ?? 'Pleno';
 };
 

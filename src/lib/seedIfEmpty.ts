@@ -24,11 +24,22 @@ export async function seedIfEmpty() {
   let seeded = false;
 
   if ((projCount ?? 0) === 0) {
-    await supabase.from('projects').insert(mockProjects.map(mapProjectToDb));
-    const teamRows = mockProjects.flatMap(p => p.team.map(m => mapTeamToDb(p.id, m)));
+    // Remap mock ids (e.g. "1", "t1", "r1") to UUIDs so Postgres accepts them
+    const idMap = new Map<string, string>();
+    const getId = (oldId: string) => {
+      if (!idMap.has(oldId)) idMap.set(oldId, crypto.randomUUID());
+      return idMap.get(oldId)!;
+    };
+    const projectsWithUuid = mockProjects.map(p => ({ ...p, id: getId(p.id) }));
+    await supabase.from('projects').insert(projectsWithUuid.map(mapProjectToDb));
+    const teamRows = mockProjects.flatMap(p =>
+      p.team.map(m => mapTeamToDb(getId(p.id), { ...m, id: crypto.randomUUID() })),
+    );
     if (teamRows.length) await supabase.from('team_members').insert(teamRows);
     const reportRows = mockProjects.flatMap(p =>
-      (p.weeklyReports ?? []).map(r => mapReportToDb(p.id, r)),
+      (p.weeklyReports ?? []).map(r =>
+        mapReportToDb(getId(p.id), { ...r, id: crypto.randomUUID() }),
+      ),
     );
     if (reportRows.length) await supabase.from('weekly_reports').insert(reportRows);
     seeded = true;

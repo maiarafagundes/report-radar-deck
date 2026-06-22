@@ -12,6 +12,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSave: (pro: Professional) => Promise<void> | void;
+  professional?: Professional | null;
 }
 
 const seniorities: TeamMember['seniority'][] = ['Junior', 'Pleno', 'Senior', 'Lead', 'Staff', 'Principal'];
@@ -24,12 +25,26 @@ const blank = {
   certifications: '',
 };
 
-export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props) {
+export default function ProfessionalFormModal({ isOpen, onClose, onSave, professional }: Props) {
   const [form, setForm] = useState(blank);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const isEdit = !!professional;
 
-  useEffect(() => { if (isOpen) setForm(blank); }, [isOpen]);
+  useEffect(() => {
+    if (!isOpen) return;
+    if (professional) {
+      setForm({
+        name: professional.name,
+        role: professional.role ?? '',
+        seniority: professional.seniority,
+        resumo: professional.resumo ?? '',
+        certifications: (professional.certifications ?? []).join('; '),
+      });
+    } else {
+      setForm(blank);
+    }
+  }, [isOpen, professional]);
 
   const handleSave = async () => {
     if (!form.name.trim()) {
@@ -39,18 +54,19 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props
     setSaving(true);
     try {
       const pro: Professional = {
-        id: crypto.randomUUID(),
+        ...(professional ?? {} as Professional),
+        id: professional?.id ?? crypto.randomUUID(),
         name: form.name.trim(),
         role: form.role.trim(),
         seniority: form.seniority,
         resumo: form.resumo.trim(),
-        softSkills: [],
+        softSkills: professional?.softSkills ?? [],
         certifications: form.certifications.split(';').map(s => s.trim()).filter(Boolean),
-        skills: [],
-        projectHistory: [],
+        skills: professional?.skills ?? [],
+        projectHistory: professional?.projectHistory ?? [],
       };
       await onSave(pro);
-      toast({ title: 'Profissional cadastrado', description: pro.name });
+      toast({ title: isEdit ? 'Profissional atualizado' : 'Profissional cadastrado', description: pro.name });
       onClose();
     } catch (e: any) {
       toast({ title: 'Erro ao salvar', description: e?.message ?? '', variant: 'destructive' });
@@ -63,7 +79,7 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Cadastrar Profissional</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar Profissional' : 'Cadastrar Profissional'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -109,7 +125,7 @@ export default function ProfessionalFormModal({ isOpen, onClose, onSave }: Props
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Cadastrar'}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : (isEdit ? 'Salvar' : 'Cadastrar')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

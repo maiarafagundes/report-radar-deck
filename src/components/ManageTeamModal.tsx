@@ -3,20 +3,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Professional, TeamMember } from '@/types/project';
+import { Professional, TeamMember, Project } from '@/types/project';
 import { Search, UserPlus, X } from 'lucide-react';
 import { Input as TextInput } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   projectName: string;
+  projectId?: string;
   currentTeam: TeamMember[];
   professionals: Professional[];
+  allProjects?: Project[];
   onSave: (team: TeamMember[]) => Promise<void> | void;
 }
 
-export default function ManageTeamModal({ isOpen, onClose, projectName, currentTeam, professionals, onSave }: Props) {
+export default function ManageTeamModal({ isOpen, onClose, projectName, projectId, currentTeam, professionals, allProjects = [], onSave }: Props) {
   const [selected, setSelected] = useState<TeamMember[]>(currentTeam);
   const [query, setQuery] = useState('');
   const [saving, setSaving] = useState(false);
@@ -39,14 +42,38 @@ export default function ManageTeamModal({ isOpen, onClose, projectName, currentT
     if (isSelected(p.id, p.name)) {
       setSelected(prev => prev.filter(s => s.id !== p.id && s.name.toLowerCase() !== p.name.toLowerCase()));
     } else {
-      setSelected(prev => [...prev, { id: p.id, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: 100 }]);
+      // Calcula quanto a pessoa já tem em outros projetos para sugerir alocação inicial.
+      const otherUsage = allProjects
+        .filter(pr => pr.id !== projectId)
+        .reduce((sum, pr) => sum + pr.team
+          .filter(m => m.name.toLowerCase() === p.name.toLowerCase())
+          .reduce((s, m) => s + (m.allocationPercent ?? 0), 0), 0);
+      const initial = Math.max(0, Math.min(100, 100 - otherUsage));
+      setSelected(prev => [...prev, { id: p.id, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: initial }]);
     }
   };
 
   const removeMember = (id: string) => setSelected(prev => prev.filter(s => s.id !== id));
 
   const updateAllocation = (id: string, value: number) => {
-    setSelected(prev => prev.map(s => s.id === id ? { ...s, allocationPercent: Math.max(0, Math.min(200, isNaN(value) ? 0 : value)) } : s));
+    const next = Math.max(0, Math.min(100, isNaN(value) ? 0 : value));
+    const member = selected.find(s => s.id === id);
+    if (member) {
+      const otherUsage = allProjects
+        .filter(pr => pr.id !== projectId)
+        .reduce((sum, pr) => sum + pr.team
+          .filter(m => m.name.toLowerCase() === member.name.toLowerCase())
+          .reduce((s, m) => s + (m.allocationPercent ?? 0), 0), 0);
+      if (otherUsage + next > 100) {
+        toast({
+          title: 'Limite de 100% excedido',
+          description: `${member.name} já tem ${otherUsage}% em outros projetos. Máximo aqui: ${100 - otherUsage}%.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    setSelected(prev => prev.map(s => s.id === id ? { ...s, allocationPercent: next } : s));
   };
 
   const handleSave = async () => {

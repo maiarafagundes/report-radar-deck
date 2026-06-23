@@ -6,11 +6,13 @@ import {
   Briefcase, Search, Gauge,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 interface AllocationTabProps {
   professionals: Professional[];
   projects: Project[];
   onProfessionalClick?: (name: string) => void;
+  onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
 }
 
 type Bucket = 'bench' | 'optimal' | 'overload' | 'under';
@@ -45,7 +47,7 @@ const barColor = (total: number) => {
 
 const normalizePersonName = (name: string) => name.trim().toLowerCase();
 
-const AllocationTab = ({ professionals, projects, onProfessionalClick }: AllocationTabProps) => {
+const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateAllocation }: AllocationTabProps) => {
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState<Bucket | 'all'>('all');
 
@@ -57,7 +59,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
       role: string;
       seniority: string;
       total: number;
-      allocations: { projectId: string; projectName: string; percent: number; type: string }[];
+      allocations: { memberId: string; projectId: string; projectName: string; percent: number; type: string }[];
       isRegistered: boolean;
     }>();
 
@@ -77,7 +79,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
         };
         const pct = typeof m.allocationPercent === 'number' ? m.allocationPercent : 100;
         entry.total += pct;
-        entry.allocations.push({ projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type });
+        entry.allocations.push({ memberId: m.id, projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type });
         map.set(key, entry);
       });
     });
@@ -285,14 +287,44 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
                       </div>
 
                       {p.allocations.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
+                        <div className="mt-2 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                           {p.allocations.map((a, i) => (
-                            <span
+                            <div
                               key={i}
                               className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] ${c.bg} ${c.text}`}
                             >
-                              {a.projectName} · {a.percent}%
-                            </span>
+                              <span className="max-w-[160px] truncate">{a.projectName}</span>
+                              {onUpdateAllocation ? (
+                                <>
+                                  <Input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    defaultValue={a.percent}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onBlur={async (e) => {
+                                      const next = Math.max(0, Math.min(100, Number(e.target.value) || 0));
+                                      if (next === a.percent) return;
+                                      const others = p.allocations.filter(x => x.memberId !== a.memberId).reduce((s, x) => s + x.percent, 0);
+                                      if (others + next > 100) {
+                                        toast({
+                                          title: 'Limite de 100% excedido',
+                                          description: `${p.name} já tem ${others}% em outros projetos. Máximo aqui: ${100 - others}%.`,
+                                          variant: 'destructive',
+                                        });
+                                        e.target.value = String(a.percent);
+                                        return;
+                                      }
+                                      await onUpdateAllocation(a.memberId, next);
+                                    }}
+                                    className="h-5 w-12 text-[10px] px-1 py-0 bg-background/60"
+                                  />
+                                  <span>%</span>
+                                </>
+                              ) : (
+                                <span>· {a.percent}%</span>
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}

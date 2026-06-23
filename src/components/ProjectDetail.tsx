@@ -28,9 +28,10 @@ interface ProjectDetailProps {
   onUpdateProject?: (project: Project) => Promise<void> | void;
   onDeleteProject?: (projectId: string) => Promise<void> | void;
   onMarkCompleted?: (projectId: string) => Promise<void> | void;
+  allProjects?: Project[];
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, allProjects = [] }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -243,8 +244,10 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
           isOpen={teamOpen}
           onClose={() => setTeamOpen(false)}
           projectName={project.name}
+          projectId={project.id}
           currentTeam={project.team}
           professionals={professionals}
+          allProjects={allProjects}
           onSave={(team) => onUpdateTeam(project.id, team)}
         />
       )}

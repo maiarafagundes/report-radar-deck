@@ -109,6 +109,19 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
+  const updateMemberAllocation = useCallback(async (memberId: string, percent: number) => {
+    const safe = Math.max(0, Math.min(100, Math.round(percent)));
+    const { error } = await supabase
+      .from('team_members')
+      .update({ allocation_percent: safe })
+      .eq('id', memberId);
+    if (error) {
+      toast({ title: 'Erro ao atualizar alocação', description: error.message, variant: 'destructive' });
+      throw error;
+    }
+    await reload();
+  }, [reload]);
+
   const updateProject = useCallback(async (p: Project) => {
     const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
     if (error) throw error;
@@ -144,5 +157,5 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
-  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, bulkUpsertProjects };
+  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, bulkUpsertProjects };
 }

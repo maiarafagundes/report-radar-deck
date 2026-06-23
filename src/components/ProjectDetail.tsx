@@ -7,6 +7,7 @@ import TeamList from './TeamList';
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
 import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CheckCircle2 } from 'lucide-react';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
 import ManageTeamModal from './ManageTeamModal';
@@ -25,9 +26,10 @@ interface ProjectDetailProps {
   onUpdateTeam?: (projectId: string, team: TeamMember[]) => Promise<void> | void;
   onUpdateProject?: (project: Project) => Promise<void> | void;
   onDeleteProject?: (projectId: string) => Promise<void> | void;
+  onMarkCompleted?: (projectId: string) => Promise<void> | void;
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -44,6 +46,12 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
           Voltar ao Dashboard
         </button>
         <div className="flex items-center gap-2">
+          {onMarkCompleted && project.status !== 'completed' && (
+            <Button onClick={() => onMarkCompleted(project.id)} variant="outline" size="sm" className="gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              Marcar como Concluído
+            </Button>
+          )}
           {onUpdateProject && (
             <Button onClick={() => setEditOpen(true)} variant="outline" size="sm" className="gap-2">
               <Pencil className="h-4 w-4" />

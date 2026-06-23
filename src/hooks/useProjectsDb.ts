@@ -19,13 +19,23 @@ export function useProjectsDb() {
       supabase.from('team_members').select('*'),
       supabase.from('weekly_reports').select('*'),
     ]);
-    const built = (projs ?? []).map(p =>
-      mapProjectFromDb(
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const built = (projs ?? []).map(p => {
+      const proj = mapProjectFromDb(
         p,
         (teams ?? []).filter(t => t.project_id === p.id),
         (reports ?? []).filter(r => r.project_id === p.id),
-      ),
-    );
+      );
+      // Auto: vencido => Atrasado (a menos que esteja Concluído)
+      if (proj.status !== 'completed' && proj.endDate) {
+        const end = new Date(proj.endDate);
+        if (!isNaN(end.getTime()) && today > end) {
+          proj.status = 'delayed';
+        }
+      }
+      return proj;
+    });
     setProjects(built);
     setLoading(false);
   }, []);

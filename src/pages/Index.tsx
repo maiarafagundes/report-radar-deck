@@ -111,6 +111,10 @@ const Index = () => {
             onUpdateTeam={canManageProjects ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
             onUpdateProject={canManageProjects ? (p) => updateProject(p) : undefined}
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
+            onMarkCompleted={isAdmin ? (id) => {
+              const target = projects.find(pp => pp.id === id);
+              if (target) updateProject({ ...target, status: 'completed', progress: 100 });
+            } : undefined}
           />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />

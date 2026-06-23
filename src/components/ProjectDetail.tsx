@@ -290,6 +290,7 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
           onClose={() => setEditOpen(false)}
           initialProject={project}
           onCreate={(updated) => { onUpdateProject(updated); }}
+          professionals={professionals}
         />
       )}
       {onDeleteProject && (

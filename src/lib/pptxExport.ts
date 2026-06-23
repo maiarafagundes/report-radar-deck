@@ -16,9 +16,29 @@ const DANGER = 'DC2626';
 const TEXT = '1F2937';
 const MUTED = '6B7280';
 const BG = 'FFFFFF';
+const SUCCESS_BG = 'DCFCE7';
+const WARN_BG = 'FEF3C7';
+const DANGER_BG = 'FEE2E2';
 
 function statusLabel(s: Project['status']) {
   return s === 'on-track' ? 'No prazo' : s === 'at-risk' ? 'Em risco' : s === 'delayed' ? 'Atrasado' : 'Concluído';
+}
+
+function typeLabel(t: Project['type']) {
+  return t === 'operacao' ? 'Operação' : t === 'sustentacao' ? 'Sustentação' : t === 'dedicado' ? 'Dedicado' : 'Projeto';
+}
+
+/** Tempo decorrido do projeto até hoje. */
+function elapsedLabel(startDate: string): string {
+  const start = new Date(startDate);
+  if (isNaN(start.getTime())) return '—';
+  const days = Math.max(0, Math.floor((Date.now() - start.getTime()) / 86_400_000));
+  if (days < 30) return `${days}d`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} ${months === 1 ? 'mês' : 'meses'}`;
+  const years = Math.floor(months / 12);
+  const rem = months % 12;
+  return rem ? `${years}a ${rem}m` : `${years} ${years === 1 ? 'ano' : 'anos'}`;
 }
 
 export async function exportDashboardPptx(projects: Project[], summary: ExecutiveSummary | null) {
@@ -44,7 +64,7 @@ export async function exportDashboardPptx(projects: Project[], summary: Executiv
   s1.addText(`Portfólio · ${projects.length} projetos · ${new Date().toLocaleDateString('pt-BR')}`, { x: 0.5, y: 0.62, w: 12, h: 0.35, fontSize: 12, color: 'CADCFC', fontFace: 'Calibri' });
 
   // Modelos de atendimento - cards
-  s1.addText('Modelos de Atendimento', { x: 0.5, y: 1.35, w: 12, h: 0.35, fontSize: 13, bold: true, color: MUTED, fontFace: 'Calibri' });
+  s1.addText('Modelos de Atendimento', { x: 0.5, y: 1.15, w: 12, h: 0.3, fontSize: 12, bold: true, color: MUTED, fontFace: 'Calibri' });
   const typeCards = [
     { label: 'Total', value: projects.length, color: ACCENT },
     { label: 'Projetos', value: byType.projeto, color: TEXT },
@@ -54,39 +74,60 @@ export async function exportDashboardPptx(projects: Project[], summary: Executiv
   ];
   typeCards.forEach((c, i) => {
     const x = 0.5 + i * 2.5;
-    s1.addShape('roundRect', { x, y: 1.75, w: 2.3, h: 1.3, fill: { color: 'F3F4F6' }, line: { color: 'E5E7EB', width: 1 }, rectRadius: 0.1 });
-    s1.addText(String(c.value), { x, y: 1.85, w: 2.3, h: 0.7, fontSize: 36, bold: true, color: c.color, align: 'center', fontFace: 'Calibri' });
-    s1.addText(c.label, { x, y: 2.55, w: 2.3, h: 0.4, fontSize: 12, color: MUTED, align: 'center', fontFace: 'Calibri' });
+    s1.addShape('roundRect', { x, y: 1.5, w: 2.3, h: 0.95, fill: { color: 'F3F4F6' }, line: { color: 'E5E7EB', width: 1 }, rectRadius: 0.08 });
+    s1.addText(String(c.value), { x, y: 1.55, w: 2.3, h: 0.55, fontSize: 26, bold: true, color: c.color, align: 'center', fontFace: 'Calibri' });
+    s1.addText(c.label, { x, y: 2.05, w: 2.3, h: 0.35, fontSize: 11, color: MUTED, align: 'center', fontFace: 'Calibri' });
   });
 
-  // Situação
-  s1.addText('Situação Geral', { x: 0.5, y: 3.4, w: 12, h: 0.35, fontSize: 13, bold: true, color: MUTED, fontFace: 'Calibri' });
+  // Situação Geral - cards compactos com fundo claro
+  s1.addText('Situação Geral', { x: 0.5, y: 2.55, w: 12, h: 0.3, fontSize: 12, bold: true, color: MUTED, fontFace: 'Calibri' });
   const sitCards = [
-    { label: 'Estáveis', value: stable.length, color: SUCCESS },
-    { label: 'Em Risco', value: atRisk.length, color: WARN },
-    { label: 'Críticos', value: critical.length, color: DANGER },
+    { label: 'Estáveis', value: stable.length, color: SUCCESS, bg: SUCCESS_BG },
+    { label: 'Em Risco', value: atRisk.length, color: WARN, bg: WARN_BG },
+    { label: 'Críticos', value: critical.length, color: DANGER, bg: DANGER_BG },
   ];
   sitCards.forEach((c, i) => {
     const x = 0.5 + i * 4.2;
-    s1.addShape('roundRect', { x, y: 3.8, w: 4, h: 1.6, fill: { color: c.color + '15' }, line: { color: c.color, width: 1 }, rectRadius: 0.1 });
-    s1.addText(String(c.value), { x, y: 3.9, w: 4, h: 0.9, fontSize: 48, bold: true, color: c.color, align: 'center', fontFace: 'Calibri' });
-    s1.addText(c.label, { x, y: 4.85, w: 4, h: 0.4, fontSize: 14, color: TEXT, align: 'center', bold: true, fontFace: 'Calibri' });
+    s1.addShape('roundRect', { x, y: 2.9, w: 4, h: 0.85, fill: { color: c.bg }, line: { color: c.color, width: 1 }, rectRadius: 0.08 });
+    s1.addText(String(c.value), { x: x + 0.2, y: 2.95, w: 1.2, h: 0.75, fontSize: 32, bold: true, color: c.color, align: 'center', valign: 'middle', fontFace: 'Calibri' });
+    s1.addText(c.label, { x: x + 1.4, y: 2.95, w: 2.5, h: 0.75, fontSize: 14, color: TEXT, bold: true, align: 'left', valign: 'middle', fontFace: 'Calibri' });
   });
 
-  // Projetos críticos lista
-  s1.addText('Projetos que demandam atenção', { x: 0.5, y: 5.65, w: 12, h: 0.35, fontSize: 13, bold: true, color: MUTED, fontFace: 'Calibri' });
-  const attn = [...critical, ...atRisk].slice(0, 6);
-  if (attn.length) {
-    const rows = attn.map(p => [
-      { text: p.name, options: { fontFace: 'Calibri', fontSize: 11, color: TEXT, bold: true } },
-      { text: p.category, options: { fontFace: 'Calibri', fontSize: 11, color: MUTED } },
-      { text: statusLabel(p.status), options: { fontFace: 'Calibri', fontSize: 11, color: p.status === 'delayed' ? DANGER : WARN, bold: true } },
-      { text: `${p.progress}%`, options: { fontFace: 'Calibri', fontSize: 11, color: TEXT, align: 'right' as const } },
-    ]);
-    s1.addTable(rows, { x: 0.5, y: 6.05, w: 12.3, colW: [5.5, 3.5, 2.0, 1.3], rowH: 0.3, border: { type: 'solid', color: 'E5E7EB', pt: 0.5 } });
-  } else {
-    s1.addText('Nenhum projeto em risco no momento.', { x: 0.5, y: 6.1, w: 12, h: 0.4, fontSize: 12, color: MUTED, italic: true, fontFace: 'Calibri' });
-  }
+  // Todos os projetos
+  s1.addText(`Projetos (${projects.length})`, { x: 0.5, y: 3.9, w: 12, h: 0.3, fontSize: 12, bold: true, color: MUTED, fontFace: 'Calibri' });
+
+  const allProjects = [...projects].sort((a, b) => {
+    const order: Record<Project['status'], number> = { 'delayed': 0, 'at-risk': 1, 'on-track': 2, 'completed': 3 };
+    return order[a.status] - order[b.status] || a.name.localeCompare(b.name);
+  });
+
+  const header = [
+    { text: 'Projeto', options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, fontFace: 'Calibri', fontSize: 10 } },
+    { text: 'Tipo', options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, fontFace: 'Calibri', fontSize: 10 } },
+    { text: 'Categoria', options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, fontFace: 'Calibri', fontSize: 10 } },
+    { text: 'Status', options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, fontFace: 'Calibri', fontSize: 10 } },
+    { text: 'Tempo', options: { bold: true, color: 'FFFFFF', fill: { color: NAVY }, fontFace: 'Calibri', fontSize: 10, align: 'right' as const } },
+  ];
+  const rows = allProjects.map(p => {
+    const sColor = p.status === 'delayed' ? DANGER : p.status === 'at-risk' ? WARN : p.status === 'completed' ? ACCENT : SUCCESS;
+    return [
+      { text: p.name, options: { fontFace: 'Calibri', fontSize: 9, color: TEXT, bold: true } },
+      { text: typeLabel(p.type), options: { fontFace: 'Calibri', fontSize: 9, color: MUTED } },
+      { text: p.category, options: { fontFace: 'Calibri', fontSize: 9, color: MUTED } },
+      { text: statusLabel(p.status), options: { fontFace: 'Calibri', fontSize: 9, color: sColor, bold: true } },
+      { text: elapsedLabel(p.startDate), options: { fontFace: 'Calibri', fontSize: 9, color: TEXT, align: 'right' as const } },
+    ];
+  });
+  // Compute row height to fit available space (4.25 -> 7.3 = 3.05" total)
+  const availH = 3.05;
+  const totalRows = rows.length + 1;
+  const rowH = Math.max(0.18, Math.min(0.34, availH / totalRows));
+  s1.addTable([header, ...rows], {
+    x: 0.5, y: 4.25, w: 12.3,
+    colW: [4.4, 1.8, 2.0, 1.6, 2.5],
+    rowH,
+    border: { type: 'solid', color: 'E5E7EB', pt: 0.5 },
+  });
 
   // ============ SLIDE 2: Resumo / Destaques / Riscos ============
   const s2 = pptx.addSlide();

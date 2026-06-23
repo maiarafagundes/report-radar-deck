@@ -25,7 +25,7 @@ export const getStatusClass = (status: ProjectStatus): string => {
     'on-track': 'status-on-track',
     'delayed': 'status-delayed',
     'at-risk': 'status-at-risk',
-    'completed': 'status-on-track',
+    'completed': 'status-completed',
   };
   return classes[status];
 };

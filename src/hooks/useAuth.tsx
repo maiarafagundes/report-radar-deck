@@ -18,6 +18,7 @@ interface AuthContextValue {
   profile: Profile | null;
   isAdmin: boolean;
   isTechLead: boolean;
+  isStakeholder: boolean;
   canManageProjects: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isTechLead, setIsTechLead] = useState(false);
+  const [isStakeholder, setIsStakeholder] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadProfileAndRole = useCallback(async (uid: string) => {
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const rs = ((roles as any[]) ?? []).map((r) => r.role);
     setIsAdmin(rs.includes('admin'));
     setIsTechLead(rs.includes('tech_lead'));
+    setIsStakeholder(rs.includes('stakeholder'));
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setIsAdmin(false);
         setIsTechLead(false);
+        setIsStakeholder(false);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
@@ -79,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, isAdmin, isTechLead, canManageProjects: isAdmin || isTechLead, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, isAdmin, isTechLead, isStakeholder, canManageProjects: isAdmin || isTechLead, loading, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

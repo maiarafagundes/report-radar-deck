@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Project } from '@/types/project';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, AlertCircle, CheckCircle2, AlertTriangle, ListChecks, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sparkles, Loader2, AlertCircle, CheckCircle2, AlertTriangle, ListChecks, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TodoItem {
@@ -55,6 +57,8 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  const [summaryId, setSummaryId] = useState<string | null>(null);
+  const [savingTodos, setSavingTodos] = useState(false);
   const bootRef = useRef(false);
 
   // Load latest persisted summary from DB and decide whether to auto-refresh.
@@ -64,7 +68,7 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
     (async () => {
       const { data, error } = await supabase
         .from('executive_summaries')
-        .select('payload, generated_at')
+        .select('id, payload, generated_at')
         .order('generated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -76,6 +80,7 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       if (data?.payload) {
         const s = data.payload as unknown as Summary;
         setSummary(s);
+        setSummaryId((data as any).id ?? null);
         lastGen = new Date(data.generated_at as string);
         setGeneratedAt(lastGen);
         onSummaryChange?.(s);
@@ -107,11 +112,12 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       onSummaryChange?.(s);
       // Persist to DB so every user sees the same latest analysis forever.
       const { data: userData } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from('executive_summaries').insert({
+      const { data: ins, error: insErr } = await supabase.from('executive_summaries').insert({
         payload: s as any,
         generated_by: userData?.user?.id ?? null,
-      });
+      }).select('id').maybeSingle();
       if (insErr) console.warn('Falha ao persistir status executivo:', insErr.message);
+      else if (ins?.id) setSummaryId(ins.id);
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.includes('429')) toast.error('Limite de requisições atingido. Tente novamente em instantes.');
@@ -120,6 +126,34 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
     } finally {
       if (!silent) setLoading(false);
     }
+  };
+
+  const persistTodos = async (next: TodoItem[]) => {
+    if (!summary) return;
+    const updated: Summary = { ...summary, todos: next };
+    setSummary(updated);
+    onSummaryChange?.(updated);
+    if (!summaryId) return;
+    setSavingTodos(true);
+    const { error } = await supabase
+      .from('executive_summaries')
+      .update({ payload: updated as any })
+      .eq('id', summaryId);
+    setSavingTodos(false);
+    if (error) toast.error('Falha ao salvar TO-DOs: ' + error.message);
+  };
+
+  const addTodo = () => {
+    if (!summary) return;
+    persistTodos([...summary.todos, { acao: '', prioridade: 'media', responsavel: '' }]);
+  };
+  const removeTodo = (i: number) => {
+    if (!summary) return;
+    persistTodos(summary.todos.filter((_, idx) => idx !== i));
+  };
+  const updateTodo = (i: number, patch: Partial<TodoItem>) => {
+    if (!summary) return;
+    persistTodos(summary.todos.map((t, idx) => idx === i ? { ...t, ...patch } : t));
   };
 
   return (
@@ -218,21 +252,56 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2 flex items-center gap-2">
-              <ListChecks className="h-3.5 w-3.5" /> TO-DOs Recomendados
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-2">
+                <ListChecks className="h-3.5 w-3.5" /> TO-DOs Recomendados
+                {savingTodos && <Loader2 className="h-3 w-3 animate-spin" />}
+              </h3>
+              {canRefresh && (
+                <Button size="sm" variant="outline" className="gap-1 h-7 px-2" onClick={addTodo}>
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              )}
+            </div>
             <div className="space-y-2">
               {summary.todos.map((t, i) => (
                 <div key={i} className="rounded-lg bg-secondary/50 border border-border p-3 flex items-start gap-3">
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${priorityColor(t.prioridade)} shrink-0`}>
-                    {t.prioridade}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{t.acao}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">→ {t.responsavel}</p>
-                  </div>
+                  {canRefresh ? (
+                    <>
+                      <Select value={t.prioridade} onValueChange={(v) => updateTodo(i, { prioridade: v as TodoItem['prioridade'] })}>
+                        <SelectTrigger className={`h-7 w-[100px] text-[10px] font-bold uppercase ${priorityColor(t.prioridade)}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="baixa">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <Input value={t.acao} placeholder="Descreva a ação" className="h-8 text-sm" onChange={(e) => updateTodo(i, { acao: e.target.value })} />
+                        <Input value={t.responsavel} placeholder="Responsável" className="h-7 text-xs" onChange={(e) => updateTodo(i, { responsavel: e.target.value })} />
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-danger hover:text-danger" onClick={() => removeTodo(i)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${priorityColor(t.prioridade)} shrink-0`}>
+                        {t.prioridade}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground">{t.acao}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">→ {t.responsavel}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
+              {summary.todos.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-3">Nenhum TO-DO. {canRefresh && 'Clique em "Adicionar" para criar um.'}</p>
+              )}
             </div>
           </div>
         </div>

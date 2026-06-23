@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { Project, WeeklyReport, TeamMember, Professional } from '@/types/project';
+import { useEffect, useState } from 'react';
+import { Project, WeeklyReport, TeamMember, Professional, ClientContact } from '@/types/project';
 import { Mail, Phone, User as UserIcon } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus, Pencil, Trash2, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
@@ -31,10 +33,11 @@ interface ProjectDetailProps {
   onMarkCompleted?: (projectId: string) => Promise<void> | void;
   onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
   onUpdateBillable?: (memberId: string, isBillable: boolean) => Promise<void> | void;
+  onUpdateContacts?: (projectId: string, contacts: ClientContact[]) => Promise<void> | void;
   allProjects?: Project[];
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, onUpdateAllocation, onUpdateBillable, allProjects = [] }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, onUpdateAllocation, onUpdateBillable, onUpdateContacts, allProjects = [] }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -43,6 +46,44 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [openReports, setOpenReports] = useState<Record<string, boolean>>({});
+  const [editingContacts, setEditingContacts] = useState(false);
+  const [draftContacts, setDraftContacts] = useState<ClientContact[]>(project.clientContacts ?? []);
+  const [savingContacts, setSavingContacts] = useState(false);
+
+  useEffect(() => {
+    if (!editingContacts) setDraftContacts(project.clientContacts ?? []);
+  }, [project.clientContacts, editingContacts]);
+
+  const addDraftContact = () => {
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `cc-${Date.now()}-${Math.random()}`;
+    setDraftContacts(prev => [...prev, { id, name: '', email: '', phone: '' }]);
+  };
+  const updateDraftContact = (id: string, patch: Partial<ClientContact>) =>
+    setDraftContacts(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
+  const removeDraftContact = (id: string) =>
+    setDraftContacts(prev => prev.filter(c => c.id !== id));
+
+  const saveContacts = async () => {
+    if (!onUpdateContacts) return;
+    for (const c of draftContacts) {
+      if (!c.name.trim() || !c.email.trim()) {
+        toast({ title: 'Contatos incompletos', description: 'Nome e e-mail são obrigatórios.', variant: 'destructive' });
+        return;
+      }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email.trim())) {
+        toast({ title: 'E-mail inválido', description: `Verifique o e-mail de ${c.name}.`, variant: 'destructive' });
+        return;
+      }
+    }
+    setSavingContacts(true);
+    try {
+      await onUpdateContacts(project.id, draftContacts);
+      toast({ title: 'Contatos do cliente atualizados' });
+      setEditingContacts(false);
+    } finally {
+      setSavingContacts(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -117,26 +158,75 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
       </div>
 
       {/* Client Contacts */}
-      {(project.clientContacts && project.clientContacts.length > 0) && (
+      {(onUpdateContacts || (project.clientContacts && project.clientContacts.length > 0)) && (
         <div>
-          <h2 className="text-lg font-bold text-foreground mb-3">Equipe do Cliente ({project.clientContacts.length})</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-foreground">
+              Equipe do Cliente ({(editingContacts ? draftContacts : (project.clientContacts ?? [])).length})
+            </h2>
+            {onUpdateContacts && !editingContacts && (
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => { setDraftContacts(project.clientContacts ?? []); setEditingContacts(true); }}>
+                <Pencil className="h-4 w-4" />
+                {(project.clientContacts ?? []).length === 0 ? 'Adicionar contatos' : 'Editar contatos'}
+              </Button>
+            )}
+          </div>
+
           <div className="glass-card p-4 space-y-2">
-            {project.clientContacts.map(c => (
-              <div key={c.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <UserIcon className="h-4 w-4 text-primary shrink-0" />
-                  <span className="text-sm font-medium text-foreground truncate">{c.name}</span>
-                </div>
-                <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-                  <Mail className="h-3.5 w-3.5" />{c.email}
-                </a>
-                {c.phone && (
-                  <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
-                    <Phone className="h-3.5 w-3.5" />{c.phone}
-                  </a>
+            {editingContacts ? (
+              <>
+                {draftContacts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground italic">Nenhum contato adicionado.</p>
+                ) : (
+                  draftContacts.map(c => (
+                    <div key={c.id} className="grid grid-cols-12 gap-2 items-center">
+                      <Input className="col-span-4 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateDraftContact(c.id, { name: e.target.value })} />
+                      <Input className="col-span-4 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateDraftContact(c.id, { email: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateDraftContact(c.id, { phone: e.target.value })} />
+                      <button type="button" onClick={() => removeDraftContact(c.id)} className="col-span-1 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4 mx-auto" />
+                      </button>
+                    </div>
+                  ))
                 )}
-              </div>
-            ))}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+                  <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={addDraftContact}>
+                    <Plus className="h-3.5 w-3.5" /> Adicionar contato
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" size="sm" variant="ghost" className="gap-1.5" onClick={() => { setEditingContacts(false); setDraftContacts(project.clientContacts ?? []); }} disabled={savingContacts}>
+                      <X className="h-3.5 w-3.5" /> Cancelar
+                    </Button>
+                    <Button type="button" size="sm" className="gap-1.5" onClick={saveContacts} disabled={savingContacts}>
+                      <Save className="h-3.5 w-3.5" /> {savingContacts ? 'Salvando...' : 'Salvar'}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              (project.clientContacts ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground italic text-center py-2">
+                  Nenhum contato do cliente cadastrado.
+                </p>
+              ) : (
+                (project.clientContacts ?? []).map(c => (
+                  <div key={c.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-sm font-medium text-foreground truncate">{c.name}</span>
+                    </div>
+                    <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+                      <Mail className="h-3.5 w-3.5" />{c.email}
+                    </a>
+                    {c.phone && (
+                      <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+                        <Phone className="h-3.5 w-3.5" />{c.phone}
+                      </a>
+                    )}
+                  </div>
+                ))
+              )
+            )}
           </div>
         </div>
       )}

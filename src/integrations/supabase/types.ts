@@ -52,6 +52,30 @@ export type Database = {
           },
         ]
       }
+      executive_summaries: {
+        Row: {
+          created_at: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       professionals: {
         Row: {
           certifications: string[]

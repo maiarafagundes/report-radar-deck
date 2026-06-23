@@ -87,6 +87,20 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
+  const updateProject = useCallback(async (p: Project) => {
+    const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
+    if (error) throw error;
+    await reload();
+  }, [reload]);
+
+  const deleteProject = useCallback(async (projectId: string) => {
+    await supabase.from('team_members').delete().eq('project_id', projectId);
+    await supabase.from('weekly_reports').delete().eq('project_id', projectId);
+    const { error } = await supabase.from('projects').delete().eq('id', projectId);
+    if (error) throw error;
+    await reload();
+  }, [reload]);
+
   const bulkUpsertProjects = useCallback(async (incoming: Project[]) => {
     if (!incoming.length) return;
     const { error } = await supabase
@@ -108,5 +122,5 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
-  return { projects, loading, reload, createProject, addReport, setProjectTeam, bulkUpsertProjects };
+  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, bulkUpsertProjects };
 }

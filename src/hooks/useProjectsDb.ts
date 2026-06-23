@@ -7,6 +7,7 @@ import {
   mapReportToDb,
   mapTeamToDb,
 } from '@/lib/projectMapper';
+import { getProjectTimelinePercent } from '@/lib/projectUtils';
 
 export function useProjectsDb() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -27,6 +28,10 @@ export function useProjectsDb() {
         (teams ?? []).filter(t => t.project_id === p.id),
         (reports ?? []).filter(r => r.project_id === p.id),
       );
+      // Progresso é sempre derivado de início/fim/hoje (cap 100%)
+      if (proj.startDate && proj.endDate) {
+        proj.progress = getProjectTimelinePercent(proj.startDate, proj.endDate);
+      }
       // Auto: vencido => Atrasado (a menos que esteja Concluído)
       if (proj.status !== 'completed' && proj.endDate) {
         const end = new Date(proj.endDate);
@@ -34,6 +39,8 @@ export function useProjectsDb() {
           proj.status = 'delayed';
         }
       }
+      // Projeto concluído sempre 100%
+      if (proj.status === 'completed') proj.progress = 100;
       return proj;
     });
     setProjects(built);

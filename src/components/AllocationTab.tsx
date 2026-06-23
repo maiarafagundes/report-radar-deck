@@ -96,11 +96,9 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
 
     const avg = total ? Math.round(sum / total) : 0;
     const allocatedHeadcount = total - buckets.bench;
-    const billability = total ? Math.round((allocatedHeadcount / total) * 100) : 0;
-
-    // FTE equivalents (% / 100). Capacity = total professionals.
     const usedFTE = sum / 100;
     const capacityFTE = total; // 1 FTE por pessoa
+    const billability = capacityFTE ? Math.round((Math.min(usedFTE, capacityFTE) / capacityFTE) * 100) : 0;
     const idleFTE = Math.max(0, capacityFTE - usedFTE);
     const utilization = capacityFTE ? Math.round((usedFTE / capacityFTE) * 100) : 0;
 
@@ -146,9 +144,9 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <KpiCard icon={<Users className="h-5 w-5 text-primary" />} label="Profissionais" value={kpis.total} hint={`${kpis.allocatedHeadcount} alocados`} />
         <KpiCard icon={<Gauge className="h-5 w-5 text-primary" />} label="Utilização Média" value={`${kpis.avg}%`} hint="Por profissional" valueClass={allocationClasses(kpis.avg)} />
-        <KpiCard icon={<Activity className="h-5 w-5 text-primary" />} label="Billability" value={`${kpis.billability}%`} hint="% com alocação" />
+        <KpiCard icon={<Activity className="h-5 w-5 text-primary" />} label="Billability" value={`${kpis.billability}%`} hint="FTE alocado / capacidade" />
         <KpiCard icon={<Briefcase className="h-5 w-5 text-primary" />} label="FTE Em Uso" value={kpis.usedFTE.toFixed(1)} hint={`de ${kpis.capacityFTE} FTE`} />
-        <KpiCard icon={<TrendingDown className="h-5 w-5 text-primary" />} label="Capacidade Ociosa" value={`${kpis.idleCapacity}%`} hint={`${(kpis.idleCapacity/100).toFixed(1)} FTE livre`} valueClass="text-primary" />
+        <KpiCard icon={<TrendingDown className="h-5 w-5 text-primary" />} label="Capacidade Ociosa" value={`${kpis.idleFTE.toFixed(1)} FTE`} hint="Disponível" valueClass="text-primary" />
         <KpiCard icon={<AlertTriangle className="h-5 w-5 text-danger" />} label="Sobrecarga" value={`${kpis.overCapacity}%`} hint={`${kpis.buckets.overload} pessoa(s)`} valueClass="text-danger" />
       </div>
 

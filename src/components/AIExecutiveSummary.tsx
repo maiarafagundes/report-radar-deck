@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Project } from '@/types/project';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2, AlertCircle, CheckCircle2, AlertTriangle, ListChecks, RefreshCw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sparkles, Loader2, AlertCircle, CheckCircle2, AlertTriangle, ListChecks, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TodoItem {
@@ -55,6 +57,8 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
+  const [summaryId, setSummaryId] = useState<string | null>(null);
+  const [savingTodos, setSavingTodos] = useState(false);
   const bootRef = useRef(false);
 
   // Load latest persisted summary from DB and decide whether to auto-refresh.
@@ -64,7 +68,7 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
     (async () => {
       const { data, error } = await supabase
         .from('executive_summaries')
-        .select('payload, generated_at')
+        .select('id, payload, generated_at')
         .order('generated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -76,6 +80,7 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       if (data?.payload) {
         const s = data.payload as unknown as Summary;
         setSummary(s);
+        setSummaryId((data as any).id ?? null);
         lastGen = new Date(data.generated_at as string);
         setGeneratedAt(lastGen);
         onSummaryChange?.(s);
@@ -107,11 +112,12 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       onSummaryChange?.(s);
       // Persist to DB so every user sees the same latest analysis forever.
       const { data: userData } = await supabase.auth.getUser();
-      const { error: insErr } = await supabase.from('executive_summaries').insert({
+      const { data: ins, error: insErr } = await supabase.from('executive_summaries').insert({
         payload: s as any,
         generated_by: userData?.user?.id ?? null,
-      });
+      }).select('id').maybeSingle();
       if (insErr) console.warn('Falha ao persistir status executivo:', insErr.message);
+      else if (ins?.id) setSummaryId(ins.id);
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.includes('429')) toast.error('Limite de requisições atingido. Tente novamente em instantes.');
@@ -120,6 +126,34 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
     } finally {
       if (!silent) setLoading(false);
     }
+  };
+
+  const persistTodos = async (next: TodoItem[]) => {
+    if (!summary) return;
+    const updated: Summary = { ...summary, todos: next };
+    setSummary(updated);
+    onSummaryChange?.(updated);
+    if (!summaryId) return;
+    setSavingTodos(true);
+    const { error } = await supabase
+      .from('executive_summaries')
+      .update({ payload: updated as any })
+      .eq('id', summaryId);
+    setSavingTodos(false);
+    if (error) toast.error('Falha ao salvar TO-DOs: ' + error.message);
+  };
+
+  const addTodo = () => {
+    if (!summary) return;
+    persistTodos([...summary.todos, { acao: '', prioridade: 'media', responsavel: '' }]);
+  };
+  const removeTodo = (i: number) => {
+    if (!summary) return;
+    persistTodos(summary.todos.filter((_, idx) => idx !== i));
+  };
+  const updateTodo = (i: number, patch: Partial<TodoItem>) => {
+    if (!summary) return;
+    persistTodos(summary.todos.map((t, idx) => idx === i ? { ...t, ...patch } : t));
   };
 
   return (

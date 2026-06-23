@@ -49,7 +49,10 @@ export default function ManageTeamModal({ isOpen, onClose, projectName, projectI
           .filter(m => m.name.toLowerCase() === p.name.toLowerCase())
           .reduce((s, m) => s + (m.allocationPercent ?? 0), 0), 0);
       const initial = Math.max(0, Math.min(100, 100 - otherUsage));
-      setSelected(prev => [...prev, { id: p.id, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: initial }]);
+      const memberId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : `tm-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      setSelected(prev => [...prev, { id: memberId, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: initial }]);
     }
   };
 

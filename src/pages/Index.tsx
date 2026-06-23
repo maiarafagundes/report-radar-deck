@@ -30,7 +30,7 @@ type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 const Index = () => {
   const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
-  const { profile, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, isTechLead, canManageProjects, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,10 +106,10 @@ const Index = () => {
             project={selectedProject}
             onBack={() => setSelectedProjectId(null)}
             onMemberClick={handleProfessionalClick}
-            onAddReport={isAdmin ? (projectId, report) => { addReport(projectId, report); } : undefined}
+            onAddReport={canManageProjects ? (projectId, report) => { addReport(projectId, report); } : undefined}
             professionals={professionals}
-            onUpdateTeam={isAdmin ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
-            onUpdateProject={isAdmin ? (p) => updateProject(p) : undefined}
+            onUpdateTeam={canManageProjects ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
+            onUpdateProject={canManageProjects ? (p) => updateProject(p) : undefined}
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
           />
         </div>
@@ -134,7 +134,7 @@ const Index = () => {
             {profile && (
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-medium text-foreground">{profile.full_name || profile.email}</p>
-                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : 'Profissional'}</p>
+                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : isTechLead ? 'Tech Lead' : 'Sem acesso'}</p>
               </div>
             )}
             <ThemeToggle />
@@ -199,11 +199,13 @@ const Index = () => {
                 <Upload className="h-4 w-4" />
                 Upload
               </Button>
-              <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
-                <FileText className="h-4 w-4" />
-                Cadastrar Status Semanal
-              </Button>
             </>
+          )}
+          {canManageProjects && (
+            <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
+              <FileText className="h-4 w-4" />
+              Cadastrar Status Semanal
+            </Button>
           )}
         </div>
 
@@ -256,7 +258,7 @@ const Index = () => {
                   <span className="text-xs text-muted-foreground">Até:</span>
                   <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-36 bg-secondary border-border text-sm" />
                 </div>
-                {isAdmin && (
+                {canManageProjects && (
                   <Button size="sm" className="gap-2" onClick={() => setNewProjectOpen(true)}>
                     <Plus className="h-4 w-4" />
                     Cadastrar Projeto

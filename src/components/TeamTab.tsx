@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react';
 import ProfessionalFormModal from './ProfessionalFormModal';
 import ProfessionalsUploadModal from './ProfessionalsUploadModal';
 import PendingRequestsPanel from './PendingRequestsPanel';
+import RoleManagementPanel from './RoleManagementPanel';
 import { useAuth } from '@/hooks/useAuth';
 
 interface TeamTabProps {
@@ -47,6 +48,7 @@ const TeamTab = ({ professionals, projects, onProfessionalClick, onCreateProfess
   return (
     <div className="space-y-4 animate-slide-in">
       {isAdmin && <PendingRequestsPanel />}
+      {isAdmin && <RoleManagementPanel />}
       {/* Header + Search */}
       <div className="glass-card p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">

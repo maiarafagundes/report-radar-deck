@@ -144,6 +144,24 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
+  const setProjectContacts = useCallback(async (projectId: string, contacts: import('@/types/project').ClientContact[]) => {
+    const { error: delErr } = await supabase.from('client_contacts').delete().eq('project_id', projectId);
+    if (delErr) {
+      toast({ title: 'Erro ao salvar contatos', description: delErr.message, variant: 'destructive' });
+      throw delErr;
+    }
+    if (contacts.length) {
+      const { error: insErr } = await supabase.from('client_contacts').insert(
+        contacts.map(c => mapContactToDb(projectId, c)),
+      );
+      if (insErr) {
+        toast({ title: 'Erro ao salvar contatos', description: insErr.message, variant: 'destructive' });
+        throw insErr;
+      }
+    }
+    await reload();
+  }, [reload]);
+
   const updateProject = useCallback(async (p: Project) => {
     const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
     if (error) throw error;
@@ -185,5 +203,5 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
-  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, bulkUpsertProjects };
+  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, setProjectContacts, bulkUpsertProjects };
 }

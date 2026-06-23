@@ -108,6 +108,7 @@ const Index = () => {
             onMemberClick={handleProfessionalClick}
             onAddReport={canManageProjects ? (projectId, report) => { addReport(projectId, report); } : undefined}
             professionals={professionals}
+            allProjects={projects}
             onUpdateTeam={canManageProjects ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
             onUpdateProject={canManageProjects ? (p) => updateProject(p) : undefined}
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}

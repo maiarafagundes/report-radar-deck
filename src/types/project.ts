@@ -8,6 +8,7 @@ export interface TeamMember {
   seniority: 'Estagiário' | 'Junior' | 'Pleno' | 'Senior' | 'Especialista' | 'Coordenador' | 'Gerente';
   avatar?: string;
   allocationPercent?: number;
+  isBillable?: boolean;
 }
 
 export interface WeeklyReport {

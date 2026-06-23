@@ -40,8 +40,6 @@ const priorityColor = (p: TodoItem['prioridade']) => {
   return 'bg-success/10 text-success border-success/30';
 };
 
-const CACHE_KEY = 'exec-summary-cache-v1';
-
 /** Most recent Monday 04:00 (local) on or before `now`. */
 function lastMonday4(now: Date): Date {
   const r = new Date(now);
@@ -59,21 +57,39 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const bootRef = useRef(false);
 
-  // Load cached summary
+  // Load latest persisted summary from DB and decide whether to auto-refresh.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.summary) {
-          setSummary(parsed.summary);
-          if (parsed.generatedAt) setGeneratedAt(new Date(parsed.generatedAt));
-          onSummaryChange?.(parsed.summary);
+    if (bootRef.current) return;
+    bootRef.current = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('executive_summaries')
+        .select('payload, generated_at')
+        .order('generated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        // table might still be propagating; allow generation later
+        return;
+      }
+      let lastGen: Date | null = null;
+      if (data?.payload) {
+        const s = data.payload as unknown as Summary;
+        setSummary(s);
+        lastGen = new Date(data.generated_at as string);
+        setGeneratedAt(lastGen);
+        onSummaryChange?.(s);
+      }
+      // Weekly auto-refresh: regenerate if last Monday 04:00 has passed since last generation.
+      if (projects.length) {
+        const threshold = lastMonday4(new Date());
+        if (!lastGen || lastGen < threshold) {
+          generate(true);
         }
       }
-    } catch { /* ignore */ }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [projects.length]);
 
   const generate = async (silent = false) => {
     if (!projects.length) return;
@@ -89,9 +105,13 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       setSummary(s);
       setGeneratedAt(at);
       onSummaryChange?.(s);
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ summary: s, generatedAt: at.toISOString() }));
-      } catch { /* ignore */ }
+      // Persist to DB so every user sees the same latest analysis forever.
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: insErr } = await supabase.from('executive_summaries').insert({
+        payload: s as any,
+        generated_by: userData?.user?.id ?? null,
+      });
+      if (insErr) console.warn('Falha ao persistir status executivo:', insErr.message);
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.includes('429')) toast.error('Limite de requisições atingido. Tente novamente em instantes.');
@@ -101,26 +121,6 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
       if (!silent) setLoading(false);
     }
   };
-
-  // Weekly auto-refresh: regenerate if a Monday 04:00 has passed since last generation.
-  useEffect(() => {
-    if (bootRef.current) return;
-    if (!projects.length) return;
-    bootRef.current = true;
-    const now = new Date();
-    const threshold = lastMonday4(now);
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      const parsed = raw ? JSON.parse(raw) : null;
-      const lastGen = parsed?.generatedAt ? new Date(parsed.generatedAt) : null;
-      if (!lastGen || lastGen < threshold) {
-        generate(true);
-      }
-    } catch {
-      generate(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects.length]);
 
   return (
     <div className="glass-card p-5 border border-primary/20">

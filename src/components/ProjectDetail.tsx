@@ -7,7 +7,8 @@ import TeamList from './TeamList';
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
 import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
 import ManageTeamModal from './ManageTeamModal';
@@ -37,6 +38,7 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
   const [teamOpen, setTeamOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [openReports, setOpenReports] = useState<Record<string, boolean>>({});
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -143,19 +145,27 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
         </div>
         <div className="space-y-3">
           {project.weeklyReports.map(report => (
-            <div key={report.id} className="glass-card p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
+            <Collapsible
+              key={report.id}
+              open={!!openReports[report.id]}
+              onOpenChange={(v) => setOpenReports((s) => ({ ...s, [report.id]: v }))}
+              className="glass-card p-4"
+            >
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <CollapsibleTrigger className="flex flex-1 items-center gap-3 text-left">
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground transition-transform ${openReports[report.id] ? 'rotate-180' : ''}`}
+                  />
                   <span className="font-mono text-sm text-muted-foreground">
                     {formatDate(report.weekStart)} — {formatDate(report.weekEnd)}
                   </span>
                   <StatusBadge status={report.status} size="sm" />
-                </div>
+                </CollapsibleTrigger>
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-2"
-                  onClick={() => generateWeeklyReportPDF(project, report)}
+                  onClick={(e) => { e.stopPropagation(); generateWeeklyReportPDF(project, report); }}
                 >
                   <Download className="h-3.5 w-3.5" />
                   PDF
@@ -165,8 +175,73 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
                 <p className="text-xs font-medium text-muted-foreground mb-1">1. Resumo da semana</p>
                 <p className="text-sm text-foreground">{report.summary}</p>
               </div>
-              
-            </div>
+              <CollapsibleContent className="space-y-4 pt-2 border-t border-border mt-2">
+                {/* Métricas */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
+                  <div className="rounded-md bg-secondary/50 p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Deploys</p>
+                    <p className="text-sm font-bold text-foreground">{report.metrics.deploymentsCount}</p>
+                  </div>
+                  <div className="rounded-md bg-secondary/50 p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tasks</p>
+                    <p className="text-sm font-bold text-foreground">{report.metrics.tasksCompleted}/{report.metrics.tasksTotal}</p>
+                  </div>
+                  <div className="rounded-md bg-secondary/50 p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Incidentes</p>
+                    <p className="text-sm font-bold text-foreground">{report.metrics.incidentsResolved}</p>
+                  </div>
+                  <div className="rounded-md bg-secondary/50 p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Uptime</p>
+                    <p className="text-sm font-bold text-foreground">{report.metrics.uptimePercent}%</p>
+                  </div>
+                </div>
+
+                {report.highlights.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-success">2. Entregas / Destaques</p>
+                    <ul className="list-disc list-inside text-sm text-foreground space-y-1">
+                      {report.highlights.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {report.inProgress && report.inProgress.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-primary">3. Em andamento</p>
+                    <ul className="list-disc list-inside text-sm text-foreground space-y-1">
+                      {report.inProgress.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {report.blockers.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-destructive">4. Riscos / Bloqueios</p>
+                    <ul className="list-disc list-inside text-sm text-foreground space-y-1">
+                      {report.blockers.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {report.nextSteps && report.nextSteps.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-warning">5. Próximos passos</p>
+                    <ul className="list-disc list-inside text-sm text-foreground space-y-1">
+                      {report.nextSteps.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {report.indicators && report.indicators.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-muted-foreground">6. Indicadores</p>
+                    <ul className="list-disc list-inside text-sm text-foreground space-y-1">
+                      {report.indicators.map((h, i) => <li key={i}>{h}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           ))}
         </div>
       </div>

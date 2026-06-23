@@ -252,21 +252,56 @@ const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: P
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-primary mb-2 flex items-center gap-2">
-              <ListChecks className="h-3.5 w-3.5" /> TO-DOs Recomendados
-            </h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-2">
+                <ListChecks className="h-3.5 w-3.5" /> TO-DOs Recomendados
+                {savingTodos && <Loader2 className="h-3 w-3 animate-spin" />}
+              </h3>
+              {canRefresh && (
+                <Button size="sm" variant="outline" className="gap-1 h-7 px-2" onClick={addTodo}>
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
+              )}
+            </div>
             <div className="space-y-2">
               {summary.todos.map((t, i) => (
                 <div key={i} className="rounded-lg bg-secondary/50 border border-border p-3 flex items-start gap-3">
-                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${priorityColor(t.prioridade)} shrink-0`}>
-                    {t.prioridade}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{t.acao}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">→ {t.responsavel}</p>
-                  </div>
+                  {canRefresh ? (
+                    <>
+                      <Select value={t.prioridade} onValueChange={(v) => updateTodo(i, { prioridade: v as TodoItem['prioridade'] })}>
+                        <SelectTrigger className={`h-7 w-[100px] text-[10px] font-bold uppercase ${priorityColor(t.prioridade)}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="baixa">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <Input value={t.acao} placeholder="Descreva a ação" className="h-8 text-sm" onChange={(e) => updateTodo(i, { acao: e.target.value })} />
+                        <Input value={t.responsavel} placeholder="Responsável" className="h-7 text-xs" onChange={(e) => updateTodo(i, { responsavel: e.target.value })} />
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-danger hover:text-danger" onClick={() => removeTodo(i)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${priorityColor(t.prioridade)} shrink-0`}>
+                        {t.prioridade}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground">{t.acao}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">→ {t.responsavel}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
+              {summary.todos.length === 0 && (
+                <p className="text-xs text-muted-foreground text-center py-3">Nenhum TO-DO. {canRefresh && 'Clique em "Adicionar" para criar um.'}</p>
+              )}
             </div>
           </div>
         </div>

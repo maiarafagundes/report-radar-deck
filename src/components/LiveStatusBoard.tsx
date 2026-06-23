@@ -131,12 +131,27 @@ const LiveStatusBoard = ({ projects, onProjectClick }: Props) => {
                     style={{ width: `${p.progress}%` }}
                   />
                 </div>
-                {p.weeklyReports?.length > 0 && (
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground pt-0.5">
-                    <Clock className="h-2.5 w-2.5" />
-                    {relative(now - new Date(p.weeklyReports[p.weeklyReports.length - 1].weekEnd).getTime())}
-                  </div>
-                )}
+                {p.weeklyReports?.length > 0 && (() => {
+                  const last = [...p.weeklyReports].sort(
+                    (a, b) => new Date(b.weekEnd).getTime() - new Date(a.weekEnd).getTime()
+                  )[0];
+                  const end = new Date(last.weekEnd);
+                  const daysSince = Math.floor((now - end.getTime()) / 86_400_000);
+                  const stale = daysSince > 7;
+                  return (
+                    <div
+                      className={`flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md border ${
+                        stale
+                          ? 'bg-danger/15 text-danger border-danger/40'
+                          : 'bg-success/15 text-success border-success/40'
+                      }`}
+                      title={`Último período: ${end.toLocaleDateString('pt-BR')} · ${daysSince}d atrás`}
+                    >
+                      <Clock className="h-2.5 w-2.5" />
+                      Últ. report {end.toLocaleDateString('pt-BR')}
+                    </div>
+                  );
+                })()}
               </div>
             </button>
           );

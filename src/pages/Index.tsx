@@ -28,7 +28,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
-  const { projects, reload: reloadProjects, createProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
   const { profile, isAdmin, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -109,6 +109,8 @@ const Index = () => {
             onAddReport={isAdmin ? (projectId, report) => { addReport(projectId, report); } : undefined}
             professionals={professionals}
             onUpdateTeam={isAdmin ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
+            onUpdateProject={isAdmin ? (p) => updateProject(p) : undefined}
+            onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
           />
         </div>
         <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />

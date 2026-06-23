@@ -5,11 +5,16 @@ import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
 
 import { formatDate, getDaysRemaining, getProjectTimelinePercent, getStatusLabel } from '@/lib/projectUtils';
-import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Download, Tag, Plus, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
 import ManageTeamModal from './ManageTeamModal';
+import NewProjectModal from './NewProjectModal';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ProjectDetailProps {
   project: Project;
@@ -18,14 +23,18 @@ interface ProjectDetailProps {
   onAddReport?: (projectId: string, report: WeeklyReport) => void;
   professionals?: Professional[];
   onUpdateTeam?: (projectId: string, team: TeamMember[]) => Promise<void> | void;
+  onUpdateProject?: (project: Project) => Promise<void> | void;
+  onDeleteProject?: (projectId: string) => Promise<void> | void;
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
   const [reportOpen, setReportOpen] = useState(false);
   const [teamOpen, setTeamOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -34,15 +43,24 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
           <ArrowLeft className="h-4 w-4" />
           Voltar ao Dashboard
         </button>
-        <Button
-          onClick={() => generateProjectPDF(project)}
-          variant="outline"
-          size="sm"
-          className="gap-2"
-        >
-          <Download className="h-4 w-4" />
-          Export PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          {onUpdateProject && (
+            <Button onClick={() => setEditOpen(true)} variant="outline" size="sm" className="gap-2">
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Button>
+          )}
+          {onDeleteProject && (
+            <Button onClick={() => setDeleteOpen(true)} variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive">
+              <Trash2 className="h-4 w-4" />
+              Excluir
+            </Button>
+          )}
+          <Button onClick={() => generateProjectPDF(project)} variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       {/* Header */}
@@ -159,6 +177,35 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
           professionals={professionals}
           onSave={(team) => onUpdateTeam(project.id, team)}
         />
+      )}
+      {onUpdateProject && (
+        <NewProjectModal
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          initialProject={project}
+          onCreate={(updated) => { onUpdateProject(updated); }}
+        />
+      )}
+      {onDeleteProject && (
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir projeto?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação removerá permanentemente o projeto "{project.name}", junto com seus reports semanais e equipe associada. Não é possível desfazer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => { await onDeleteProject(project.id); setDeleteOpen(false); onBack(); }}
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

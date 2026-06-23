@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Project, ProjectStatus, ProjectType } from '@/types/project';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,8 @@ interface NewProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (project: Project) => void;
+  /** When provided, modal switches to edit mode and calls onCreate with the same id. */
+  initialProject?: Project | null;
 }
 
 const categories: Project['category'][] = ['DevOps', 'SRE', 'Platform', 'Infrastructure'];
@@ -28,7 +30,8 @@ const statuses: { value: ProjectStatus; label: string }[] = [
   { value: 'completed', label: 'Concluído' },
 ];
 
-const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) => {
+const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProjectModalProps) => {
+  const isEdit = !!initialProject;
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Project['category']>('Infrastructure');
   const [type, setType] = useState<ProjectType>('projeto');
@@ -37,6 +40,24 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [tags, setTags] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (initialProject) {
+      setName(initialProject.name);
+      setCategory(initialProject.category);
+      setType(initialProject.type);
+      setStatus(initialProject.status);
+      setDescription(initialProject.description);
+      setStartDate(initialProject.startDate);
+      setEndDate(initialProject.endDate);
+      setTags(initialProject.tags.join(', '));
+    } else {
+      setName(''); setCategory('Infrastructure'); setType('projeto');
+      setStatus('on-track'); setDescription(''); setStartDate('');
+      setEndDate(''); setTags('');
+    }
+  }, [isOpen, initialProject]);
 
   const computedProgress = startDate && endDate ? getProjectTimelinePercent(startDate, endDate) : 0;
 
@@ -50,7 +71,7 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
     e.preventDefault();
     if (!name || !startDate || !endDate) return;
     const project: Project = {
-      id: crypto.randomUUID(),
+      id: initialProject?.id ?? crypto.randomUUID(),
       name,
       description,
       category,
@@ -59,8 +80,8 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
       startDate,
       endDate,
       progress: getProjectTimelinePercent(startDate, endDate),
-      team: [],
-      weeklyReports: [],
+      team: initialProject?.team ?? [],
+      weeklyReports: initialProject?.weeklyReports ?? [],
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
     };
     onCreate(project);
@@ -72,7 +93,7 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cadastrar Projeto</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar Projeto' : 'Cadastrar Projeto'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -130,7 +151,7 @@ const NewProjectModal = ({ isOpen, onClose, onCreate }: NewProjectModalProps) =>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-            <Button type="submit">Cadastrar</Button>
+            <Button type="submit">{isEdit ? 'Salvar alterações' : 'Cadastrar'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

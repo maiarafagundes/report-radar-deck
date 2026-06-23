@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Project } from '@/types/project';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ interface RiskItem {
   projetos: string[];
 }
 
-interface Summary {
+export interface Summary {
   resumo: string;
   destaques: HighlightItem[];
   riscos: RiskItem[];
@@ -30,6 +30,8 @@ interface Summary {
 
 interface Props {
   projects: Project[];
+  canRefresh?: boolean;
+  onSummaryChange?: (summary: Summary | null) => void;
 }
 
 const priorityColor = (p: TodoItem['prioridade']) => {
@@ -38,20 +40,40 @@ const priorityColor = (p: TodoItem['prioridade']) => {
   return 'bg-success/10 text-success border-success/30';
 };
 
-const AIExecutiveSummary = ({ projects }: Props) => {
+const CACHE_KEY = 'exec-summary-cache-v1';
+
+/** Most recent Monday 04:00 (local) on or before `now`. */
+function lastMonday4(now: Date): Date {
+  const r = new Date(now);
+  r.setHours(4, 0, 0, 0);
+  const day = r.getDay(); // 0=Sun..6=Sat
+  const back = day === 0 ? 6 : day - 1;
+  r.setDate(r.getDate() - back);
+  if (r > now) r.setDate(r.getDate() - 7);
+  return r;
+}
+
+const AIExecutiveSummary = ({ projects, canRefresh = false, onSummaryChange }: Props) => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
-  const [autoUpdate, setAutoUpdate] = useState(true);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastFingerprintRef = useRef<string>('');
+  const bootRef = useRef(false);
 
-  const fingerprint = useMemo(
-    () => projects
-      .map(p => `${p.id}:${p.status}:${p.progress}:${p.weeklyReports?.length ?? 0}`)
-      .join('|'),
-    [projects]
-  );
+  // Load cached summary
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.summary) {
+          setSummary(parsed.summary);
+          if (parsed.generatedAt) setGeneratedAt(new Date(parsed.generatedAt));
+          onSummaryChange?.(parsed.summary);
+        }
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generate = async (silent = false) => {
     if (!projects.length) return;
@@ -62,9 +84,14 @@ const AIExecutiveSummary = ({ projects }: Props) => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setSummary(data as Summary);
-      setGeneratedAt(new Date());
-      lastFingerprintRef.current = fingerprint;
+      const s = data as Summary;
+      const at = new Date();
+      setSummary(s);
+      setGeneratedAt(at);
+      onSummaryChange?.(s);
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ summary: s, generatedAt: at.toISOString() }));
+      } catch { /* ignore */ }
     } catch (e: any) {
       const msg = String(e?.message || e);
       if (msg.includes('429')) toast.error('Limite de requisições atingido. Tente novamente em instantes.');
@@ -75,16 +102,25 @@ const AIExecutiveSummary = ({ projects }: Props) => {
     }
   };
 
-  // Auto-regenerate when project data changes (debounced)
+  // Weekly auto-refresh: regenerate if a Monday 04:00 has passed since last generation.
   useEffect(() => {
-    if (!autoUpdate) return;
+    if (bootRef.current) return;
     if (!projects.length) return;
-    if (fingerprint === lastFingerprintRef.current) return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { generate(true); }, 1500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    bootRef.current = true;
+    const now = new Date();
+    const threshold = lastMonday4(now);
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      const lastGen = parsed?.generatedAt ? new Date(parsed.generatedAt) : null;
+      if (!lastGen || lastGen < threshold) {
+        generate(true);
+      }
+    } catch {
+      generate(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fingerprint, autoUpdate]);
+  }, [projects.length]);
 
   return (
     <div className="glass-card p-5 border border-primary/20">
@@ -94,37 +130,23 @@ const AIExecutiveSummary = ({ projects }: Props) => {
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+            <h2 className="text-base font-bold text-foreground">
               Status Executivo Consolidado
-              {autoUpdate && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-success/10 text-success border border-success/30">
-                  Auto
-                </span>
-              )}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Análise inteligente de {projects.length} projetos com IA
-              {generatedAt && ` · Atualizado ${generatedAt.toLocaleTimeString('pt-BR')}`}
+              Análise de {projects.length} projetos · atualização automática toda segunda às 04:00
+              {generatedAt && ` · Atualizado ${generatedAt.toLocaleString('pt-BR')}`}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setAutoUpdate(v => !v)}
-            className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-md border transition-colors ${
-              autoUpdate
-                ? 'bg-success/10 text-success border-success/30 hover:bg-success/20'
-                : 'bg-secondary text-muted-foreground border-border hover:bg-secondary/80'
-            }`}
-            title="Liga/desliga atualização automática quando dados mudam"
-          >
-            Auto {autoUpdate ? 'ON' : 'OFF'}
-          </button>
-          <Button size="sm" onClick={() => generate(false)} disabled={loading} className="gap-2">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : summary ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? 'Analisando...' : summary ? 'Atualizar' : 'Gerar análise'}
-          </Button>
-        </div>
+        {canRefresh && (
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={() => generate(false)} disabled={loading} className="gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : summary ? <RefreshCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+              {loading ? 'Analisando...' : summary ? 'Atualizar' : 'Gerar análise'}
+            </Button>
+          </div>
+        )}
       </div>
 
       {!summary && !loading && (

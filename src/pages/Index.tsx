@@ -9,14 +9,13 @@ import ExecutiveDashboard from '@/components/ExecutiveDashboard';
 import ProfessionalModal from '@/components/ProfessionalModal';
 import TeamTab from '@/components/TeamTab';
 import AllocationTab from '@/components/AllocationTab';
-import UploadModal from '@/components/UploadModal';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Upload, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge, FileText, LogOut } from 'lucide-react';
+import { Search, LayoutGrid, Activity, BarChart3, FolderKanban, Users, Plus, Gauge, FileText, LogOut } from 'lucide-react';
 
 const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
   { label: 'Todos', value: 'all' },
@@ -28,19 +27,20 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
-  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, setProjectContacts, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, setProjectContacts } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
-  const { profile, isAdmin, isTechLead, canManageProjects, signOut } = useAuth();
+  const { profile, isAdmin, isTechLead, isStakeholder, canManageProjects, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'all'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [weeklyReportOpen, setWeeklyReportOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabView>(isAdmin ? 'dashboard' : 'projects');
+  const [activeTab, setActiveTab] = useState<TabView>(
+    isAdmin || isStakeholder ? 'dashboard' : 'projects'
+  );
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -61,11 +61,6 @@ const Index = () => {
   }, [projects, statusFilter, searchQuery, dateFrom, dateTo]);
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
-
-  const handleUpload = async (newProjects: Project[], newProfessionals: Professional[]) => {
-    await bulkUpsertProjects(newProjects);
-    if (newProfessionals.length > 0) await bulkUpsertProfessionals(newProfessionals);
-  };
 
   const handleProfessionalClick = (name: string) => {
     const found = professionals.find(p => p.name.toLowerCase() === name.toLowerCase());
@@ -142,7 +137,7 @@ const Index = () => {
             {profile && (
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-medium text-foreground">{profile.full_name || profile.email}</p>
-                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : isTechLead ? 'Tech Lead' : 'Sem acesso'}</p>
+                <p className="text-[10px] text-muted-foreground">{isAdmin ? 'Administrador' : isTechLead ? 'Tech Lead' : isStakeholder ? 'Stakeholder' : 'Sem acesso'}</p>
               </div>
             )}
             <ThemeToggle />
@@ -155,7 +150,7 @@ const Index = () => {
 
         {/* Tabs */}
         <div className="mb-6 flex items-center gap-1 bg-secondary/50 rounded-lg p-1 w-fit">
-          {isAdmin && (
+          {(isAdmin || isStakeholder) && (
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
@@ -168,17 +163,19 @@ const Index = () => {
               Dashboard
             </button>
           )}
-          <button
-            onClick={() => setActiveTab('projects')}
-            className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === 'projects'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <FolderKanban className="h-4 w-4" />
-            Projetos
-          </button>
+          {!isStakeholder && (
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'projects'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FolderKanban className="h-4 w-4" />
+              Projetos
+            </button>
+          )}
           {isAdmin && (
             <>
               <button
@@ -192,22 +189,20 @@ const Index = () => {
                 <Users className="h-4 w-4" />
                 Equipe
               </button>
-              <button
-                onClick={() => setActiveTab('allocation')}
-                className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  activeTab === 'allocation'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Gauge className="h-4 w-4" />
-                Alocação
-              </button>
-              <Button variant="ghost" size="sm" className="gap-2 ml-2" onClick={() => setUploadOpen(true)}>
-                <Upload className="h-4 w-4" />
-                Upload
-              </Button>
             </>
+          )}
+          {(isAdmin || isStakeholder) && (
+            <button
+              onClick={() => setActiveTab('allocation')}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'allocation'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Gauge className="h-4 w-4" />
+              Alocação
+            </button>
           )}
           {canManageProjects && (
             <Button variant="default" size="sm" className="gap-2 ml-1" onClick={() => setWeeklyReportOpen(true)}>
@@ -217,7 +212,7 @@ const Index = () => {
           )}
         </div>
 
-        {activeTab === 'dashboard' && isAdmin && (
+        {activeTab === 'dashboard' && (isAdmin || isStakeholder) && (
           <ExecutiveDashboard
             projects={projects}
             professionals={professionals}
@@ -239,7 +234,7 @@ const Index = () => {
           />
         )}
 
-        {activeTab === 'allocation' && isAdmin && (
+        {activeTab === 'allocation' && (isAdmin || isStakeholder) && (
           <AllocationTab
             professionals={professionals}
             projects={projects}
@@ -247,7 +242,7 @@ const Index = () => {
           />
         )}
 
-        {activeTab === 'projects' && (
+        {activeTab === 'projects' && !isStakeholder && (
           <>
             {/* Filters */}
             <div className="mb-6 glass-card p-4">
@@ -309,7 +304,6 @@ const Index = () => {
         )}
       </div>
 
-      <UploadModal isOpen={uploadOpen} onClose={() => setUploadOpen(false)} onUpload={handleUpload} />
       <NewProjectModal
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}

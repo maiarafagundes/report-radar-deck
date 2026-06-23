@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldCheck, Users2, Loader2 } from 'lucide-react';
+import { Shield, ShieldCheck, Eye, Users2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type Role = 'admin' | 'tech_lead';
+type Role = 'admin' | 'tech_lead' | 'stakeholder';
 
 interface RowUser {
   id: string;
@@ -47,7 +47,7 @@ export default function RoleManagementPanel() {
     try {
       const { error } = await supabase.rpc('set_user_role' as any, { _user_id: userId, _role: role });
       if (error) throw error;
-      toast({ title: 'Perfil atualizado', description: role === 'admin' ? 'Usuário agora é Administrador.' : 'Usuário agora é Tech Lead.' });
+      toast({ title: 'Perfil atualizado', description: role === 'admin' ? 'Usuário agora é Administrador.' : role === 'tech_lead' ? 'Usuário agora é Tech Lead.' : 'Usuário agora é Stakeholder.' });
       await load();
     } catch (e: any) {
       toast({ title: 'Erro ao atualizar perfil', description: e?.message ?? '', variant: 'destructive' });
@@ -69,6 +69,8 @@ export default function RoleManagementPanel() {
           {rows.map((r) => {
             const isAdmin = r.role === 'admin';
             const isSelf = user?.id === r.id;
+            const label = r.role === 'admin' ? 'Administrador' : r.role === 'tech_lead' ? 'Tech Lead' : r.role === 'stakeholder' ? 'Stakeholder' : 'Sem perfil';
+            const Icon = isAdmin ? ShieldCheck : r.role === 'stakeholder' ? Eye : Shield;
             return (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary/50 px-3 py-2">
                 <div className="min-w-0 flex-1">
@@ -77,19 +79,23 @@ export default function RoleManagementPanel() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-medium ${isAdmin ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>
-                    {isAdmin ? <ShieldCheck className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-                    {isAdmin ? 'Administrador' : r.role === 'tech_lead' ? 'Tech Lead' : 'Sem perfil'}
+                    <Icon className="h-3 w-3" />
+                    {label}
                   </span>
-                  <Button
-                    size="sm"
-                    variant={isAdmin ? 'outline' : 'default'}
+                  <Select
+                    value={r.role ?? undefined}
                     disabled={busy === r.id || isSelf}
-                    title={isSelf ? 'Você não pode alterar seu próprio perfil' : ''}
-                    onClick={() => setRole(r.id, isAdmin ? 'tech_lead' : 'admin')}
-                    className="h-7 text-xs gap-1"
+                    onValueChange={(v) => setRole(r.id, v as Role)}
                   >
-                    {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : (isAdmin ? 'Tornar Tech Lead' : 'Tornar Admin')}
-                  </Button>
+                    <SelectTrigger className="h-7 text-xs w-[150px]" title={isSelf ? 'Você não pode alterar seu próprio perfil' : ''}>
+                      {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue placeholder="Definir perfil" />}
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="tech_lead">Tech Lead</SelectItem>
+                      <SelectItem value="stakeholder">Stakeholder</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </li>
             );

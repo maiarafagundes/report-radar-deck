@@ -6,15 +6,11 @@ import {
   Briefcase, Search, Gauge,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from '@/hooks/use-toast';
 
 interface AllocationTabProps {
   professionals: Professional[];
   projects: Project[];
   onProfessionalClick?: (name: string) => void;
-  onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
-  onUpdateBillable?: (memberId: string, isBillable: boolean) => Promise<void> | void;
 }
 
 type Bucket = 'bench' | 'optimal' | 'overload' | 'under';
@@ -49,7 +45,7 @@ const barColor = (total: number) => {
 
 const normalizePersonName = (name: string) => name.trim().toLowerCase();
 
-const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateAllocation, onUpdateBillable }: AllocationTabProps) => {
+const AllocationTab = ({ professionals, projects, onProfessionalClick }: AllocationTabProps) => {
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState<Bucket | 'all'>('all');
 
@@ -299,53 +295,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
                               key={i}
                               className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10px] ${c.bg} ${c.text}`}
                             >
-                              {onUpdateBillable ? (
-                                <label
-                                  className="inline-flex items-center gap-1 cursor-pointer"
-                                  title={a.isBillable ? 'Faturável: alocação contabiliza no billing' : 'Não faturável: não conta no billing'}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Checkbox
-                                    checked={a.isBillable}
-                                    onCheckedChange={(v) => onUpdateBillable(a.memberId, !!v)}
-                                    className="h-3 w-3"
-                                  />
-                                  <span className="text-[9px] uppercase tracking-wide">bill</span>
-                                </label>
-                              ) : (
-                                <span className="text-[9px] uppercase tracking-wide opacity-70">{a.isBillable ? 'bill' : 'n/bill'}</span>
-                              )}
-                              <span className="max-w-[160px] truncate">{a.projectName}</span>
-                              {onUpdateAllocation ? (
-                                <>
-                                  <Input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    defaultValue={a.percent}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onBlur={async (e) => {
-                                      const next = Math.max(0, Math.min(100, Number(e.target.value) || 0));
-                                      if (next === a.percent) return;
-                                      const others = p.allocations.filter(x => x.memberId !== a.memberId).reduce((s, x) => s + x.percent, 0);
-                                      if (others + next > 100) {
-                                        toast({
-                                          title: 'Limite de 100% excedido',
-                                          description: `${p.name} já tem ${others}% em outros projetos. Máximo aqui: ${100 - others}%.`,
-                                          variant: 'destructive',
-                                        });
-                                        e.target.value = String(a.percent);
-                                        return;
-                                      }
-                                      await onUpdateAllocation(a.memberId, next);
-                                    }}
-                                    className="h-5 w-12 text-[10px] px-1 py-0 bg-background/60"
-                                  />
-                                  <span>%</span>
-                                </>
-                              ) : (
-                                <span>· {a.percent}%</span>
-                              )}
+                              <span className="max-w-[180px] truncate">{a.projectName}</span>
                             </div>
                           ))}
                         </div>

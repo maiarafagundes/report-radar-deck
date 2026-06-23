@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
-import { Project, ProjectStatus, ProjectType } from '@/types/project';
+import { useEffect, useMemo, useState } from 'react';
+import { Project, ProjectStatus, ProjectType, Professional, TeamMember, ClientContact } from '@/types/project';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getProjectTimelinePercent } from '@/lib/projectUtils';
+import { Plus, Trash2, Search } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -14,6 +17,7 @@ interface NewProjectModalProps {
   onCreate: (project: Project) => void;
   /** When provided, modal switches to edit mode and calls onCreate with the same id. */
   initialProject?: Project | null;
+  professionals?: Professional[];
 }
 
 const categories: Project['category'][] = ['DevOps', 'SRE', 'Platform', 'Infrastructure'];
@@ -30,7 +34,7 @@ const statuses: { value: ProjectStatus; label: string }[] = [
   { value: 'completed', label: 'Concluído' },
 ];
 
-const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProjectModalProps) => {
+const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject, professionals = [] }: NewProjectModalProps) => {
   const isEdit = !!initialProject;
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Project['category']>('Infrastructure');
@@ -40,6 +44,9 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [tags, setTags] = useState('');
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [contacts, setContacts] = useState<ClientContact[]>([]);
+  const [proSearch, setProSearch] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
@@ -52,11 +59,15 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
       setStartDate(initialProject.startDate);
       setEndDate(initialProject.endDate);
       setTags(initialProject.tags.join(', '));
+      setTeam(initialProject.team ?? []);
+      setContacts(initialProject.clientContacts ?? []);
     } else {
       setName(''); setCategory('Infrastructure'); setType('projeto');
       setStatus('on-track'); setDescription(''); setStartDate('');
       setEndDate(''); setTags('');
+      setTeam([]); setContacts([]);
     }
+    setProSearch('');
   }, [isOpen, initialProject]);
 
   const computedProgress = startDate && endDate ? getProjectTimelinePercent(startDate, endDate) : 0;
@@ -65,11 +76,51 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
     setName(''); setCategory('Infrastructure'); setType('projeto');
     setStatus('on-track'); setDescription(''); setStartDate('');
     setEndDate(''); setTags('');
+    setTeam([]); setContacts([]);
   };
+
+  const filteredPros = useMemo(() => {
+    const q = proSearch.trim().toLowerCase();
+    return professionals.filter(p => !q || p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q));
+  }, [professionals, proSearch]);
+
+  const toggleMember = (p: Professional) => {
+    const exists = team.find(t => t.name.toLowerCase() === p.name.toLowerCase());
+    if (exists) {
+      setTeam(prev => prev.filter(t => t.id !== exists.id));
+    } else {
+      const memberId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `tm-${Date.now()}-${Math.random()}`;
+      setTeam(prev => [...prev, { id: memberId, name: p.name, role: p.role, seniority: p.seniority, allocationPercent: 0, isBillable: true }]);
+    }
+  };
+
+  const updateMember = (id: string, patch: Partial<TeamMember>) => {
+    setTeam(prev => prev.map(t => t.id === id ? { ...t, ...patch } : t));
+  };
+
+  const addContact = () => {
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `cc-${Date.now()}-${Math.random()}`;
+    setContacts(prev => [...prev, { id, name: '', email: '', phone: '' }]);
+  };
+  const updateContact = (id: string, patch: Partial<ClientContact>) => {
+    setContacts(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
+  };
+  const removeContact = (id: string) => setContacts(prev => prev.filter(c => c.id !== id));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !startDate || !endDate) return;
+    // Validate contacts: name + email required
+    for (const c of contacts) {
+      if (!c.name.trim() || !c.email.trim()) {
+        toast({ title: 'Contatos do cliente incompletos', description: 'Nome e e-mail são obrigatórios em todos os contatos.', variant: 'destructive' });
+        return;
+      }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.email.trim())) {
+        toast({ title: 'E-mail inválido', description: `Verifique o e-mail de ${c.name}.`, variant: 'destructive' });
+        return;
+      }
+    }
     const project: Project = {
       id: initialProject?.id ?? crypto.randomUUID(),
       name,
@@ -80,9 +131,10 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
       startDate,
       endDate,
       progress: getProjectTimelinePercent(startDate, endDate),
-      team: initialProject?.team ?? [],
+      team,
       weeklyReports: initialProject?.weeklyReports ?? [],
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      clientContacts: contacts,
     };
     onCreate(project);
     reset();
@@ -123,6 +175,33 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
               <Label>Descrição</Label>
               <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Descreva o escopo do projeto..." />
             </div>
+
+            {/* Contatos do Cliente */}
+            <div className="col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <Label>Equipe do Cliente</Label>
+                <Button type="button" size="sm" variant="outline" className="gap-1.5 h-7" onClick={addContact}>
+                  <Plus className="h-3.5 w-3.5" /> Adicionar contato
+                </Button>
+              </div>
+              {contacts.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">Nenhum contato adicionado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {contacts.map(c => (
+                    <div key={c.id} className="grid grid-cols-12 gap-2 items-center">
+                      <Input className="col-span-4 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateContact(c.id, { name: e.target.value })} />
+                      <Input className="col-span-4 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateContact(c.id, { email: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateContact(c.id, { phone: e.target.value })} />
+                      <button type="button" onClick={() => removeContact(c.id)} className="col-span-1 text-muted-foreground hover:text-danger">
+                        <Trash2 className="h-4 w-4 mx-auto" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div>
               <Label>Status</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as ProjectStatus)}>
@@ -147,6 +226,67 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject }: NewProje
             <div className="col-span-2">
               <Label>Tags (separadas por vírgula)</Label>
               <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Kubernetes, Cloud, Helm, Istio" />
+            </div>
+
+            {/* Equipe interna */}
+            <div className="col-span-2 border-t border-border pt-4">
+              <Label>Equipe Interna (opcional)</Label>
+              <p className="text-[11px] text-muted-foreground mb-2">Marque os profissionais e defina a alocação (%) e se a hora será faturada.</p>
+              {team.length > 0 && (
+                <div className="space-y-2 mb-3">
+                  {team.map(m => (
+                    <div key={m.id} className="flex items-center gap-2 rounded-md bg-secondary/50 px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{m.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{m.role || m.seniority}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Input
+                          type="number" min={0} max={100}
+                          value={m.allocationPercent ?? 0}
+                          onChange={(e) => updateMember(m.id, { allocationPercent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
+                          className="h-7 w-16 text-xs px-2"
+                        />
+                        <span className="text-xs text-muted-foreground">%</span>
+                      </div>
+                      <label className="inline-flex items-center gap-1 cursor-pointer">
+                        <Checkbox
+                          checked={m.isBillable !== false}
+                          onCheckedChange={(v) => updateMember(m.id, { isBillable: !!v })}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-[11px] text-muted-foreground">Billing</span>
+                      </label>
+                      <button type="button" onClick={() => setTeam(prev => prev.filter(t => t.id !== m.id))} className="text-muted-foreground hover:text-danger">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {professionals.length > 0 && (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input placeholder="Buscar profissional para adicionar..." value={proSearch} onChange={(e) => setProSearch(e.target.value)} className="pl-9 h-8 text-sm" />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                    {filteredPros.slice(0, 50).map(p => {
+                      const checked = team.some(t => t.name.toLowerCase() === p.name.toLowerCase());
+                      return (
+                        <label key={p.id} className="flex items-center gap-2 p-2 hover:bg-secondary/60 cursor-pointer text-sm">
+                          <Checkbox checked={checked} onCheckedChange={() => toggleMember(p)} />
+                          <span className="flex-1 truncate">{p.name}</span>
+                          <span className="text-[11px] text-muted-foreground truncate">{p.role || '—'} · {p.seniority}</span>
+                        </label>
+                      );
+                    })}
+                    {filteredPros.length === 0 && (
+                      <p className="p-3 text-xs text-muted-foreground text-center">Nenhum profissional encontrado.</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

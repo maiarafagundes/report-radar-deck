@@ -11,6 +11,13 @@ export interface TeamMember {
   isBillable?: boolean;
 }
 
+export interface ClientContact {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
 export interface WeeklyReport {
   id: string;
   weekStart: string;
@@ -44,6 +51,7 @@ export interface Project {
   team: TeamMember[];
   weeklyReports: WeeklyReport[];
   tags: string[];
+  clientContacts?: ClientContact[];
 }
 
 export interface Professional {

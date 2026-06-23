@@ -112,6 +112,8 @@ const Index = () => {
             onUpdateTeam={canManageProjects ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
             onUpdateProject={canManageProjects ? (p) => updateProject(p) : undefined}
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
+            onUpdateAllocation={canManageProjects ? (memberId, percent) => updateMemberAllocation(memberId, percent) : undefined}
+            onUpdateBillable={canManageProjects ? (memberId, isBillable) => updateMemberBillable(memberId, isBillable) : undefined}
             onMarkCompleted={isAdmin ? (id) => {
               const target = projects.find(pp => pp.id === id);
               if (target) updateProject({ ...target, status: 'completed', progress: 100 });
@@ -240,8 +242,6 @@ const Index = () => {
             professionals={professionals}
             projects={projects}
             onProfessionalClick={handleProfessionalClick}
-            onUpdateAllocation={(memberId, percent) => updateMemberAllocation(memberId, percent)}
-            onUpdateBillable={(memberId, isBillable) => updateMemberBillable(memberId, isBillable)}
           />
         )}
 
@@ -312,6 +312,7 @@ const Index = () => {
         isOpen={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
         onCreate={(p) => { createProject(p); }}
+        professionals={professionals}
       />
       <NewWeeklyReportModal
         isOpen={weeklyReportOpen}

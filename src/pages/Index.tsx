@@ -165,7 +165,7 @@ const Index = () => {
               }`}
             >
               <BarChart3 className="h-4 w-4" />
-              Resumo Executivo
+              Dashboard
             </button>
           )}
           <button
@@ -223,6 +223,7 @@ const Index = () => {
             professionals={professionals}
             onProfessionalClick={handleProfessionalClick}
             onProjectClick={(id) => setSelectedProjectId(id)}
+            canRefreshSummary={isAdmin}
           />
         )}
 

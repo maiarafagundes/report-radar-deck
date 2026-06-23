@@ -43,13 +43,15 @@ const barColor = (total: number) => {
   return 'hsl(var(--primary))';
 };
 
+const normalizePersonName = (name: string) => name.trim().toLowerCase();
+
 const AllocationTab = ({ professionals, projects, onProfessionalClick }: AllocationTabProps) => {
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState<Bucket | 'all'>('all');
 
   /** Build allocation index from project.team[] */
   const peopleAllocation = useMemo(() => {
-    // key by lowercased name (professionals + team_members aren't FK-bound)
+    // key by normalized name (professionals + team_members aren't FK-bound)
     const map = new Map<string, {
       name: string;
       role: string;
@@ -60,7 +62,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
     }>();
 
     professionals.forEach(p => {
-      map.set(p.name.toLowerCase(), {
+      map.set(normalizePersonName(p.name), {
         name: p.name, role: p.role, seniority: p.seniority,
         total: 0, allocations: [], isRegistered: true,
       });
@@ -68,7 +70,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
 
     projects.forEach(proj => {
       proj.team.forEach(m => {
-        const key = m.name.toLowerCase();
+        const key = normalizePersonName(m.name);
         const entry = map.get(key) ?? {
           name: m.name, role: m.role, seniority: m.seniority,
           total: 0, allocations: [], isRegistered: false,

@@ -152,50 +152,37 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
               className="glass-card p-4"
             >
               <div className="flex items-center justify-between mb-2 gap-2">
-                <CollapsibleTrigger className="flex flex-1 items-center gap-3 text-left">
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground transition-transform ${openReports[report.id] ? 'rotate-180' : ''}`}
-                  />
+                <div className="flex items-center gap-3">
                   <span className="font-mono text-sm text-muted-foreground">
                     {formatDate(report.weekStart)} — {formatDate(report.weekEnd)}
                   </span>
                   <StatusBadge status={report.status} size="sm" />
-                </CollapsibleTrigger>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={(e) => { e.stopPropagation(); generateWeeklyReportPDF(project, report); }}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  PDF
-                </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 transition-transform ${openReports[report.id] ? 'rotate-180' : ''}`}
+                      />
+                      {openReports[report.id] ? 'Recolher detalhes' : 'Ver detalhes'}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={(e) => { e.stopPropagation(); generateWeeklyReportPDF(project, report); }}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    PDF
+                  </Button>
+                </div>
               </div>
               <div className="mb-3">
                 <p className="text-xs font-medium text-muted-foreground mb-1">1. Resumo da semana</p>
                 <p className="text-sm text-foreground">{report.summary}</p>
               </div>
-              <CollapsibleContent className="space-y-4 pt-2 border-t border-border mt-2">
-                {/* Métricas */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
-                  <div className="rounded-md bg-secondary/50 p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Deploys</p>
-                    <p className="text-sm font-bold text-foreground">{report.metrics.deploymentsCount}</p>
-                  </div>
-                  <div className="rounded-md bg-secondary/50 p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Tasks</p>
-                    <p className="text-sm font-bold text-foreground">{report.metrics.tasksCompleted}/{report.metrics.tasksTotal}</p>
-                  </div>
-                  <div className="rounded-md bg-secondary/50 p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Incidentes</p>
-                    <p className="text-sm font-bold text-foreground">{report.metrics.incidentsResolved}</p>
-                  </div>
-                  <div className="rounded-md bg-secondary/50 p-2 text-center">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Uptime</p>
-                    <p className="text-sm font-bold text-foreground">{report.metrics.uptimePercent}%</p>
-                  </div>
-                </div>
-
+              <CollapsibleContent className="space-y-4 pt-3 border-t border-border mt-2">
                 {report.highlights.length > 0 && (
                   <div>
                     <p className="text-xs font-semibold mb-1 text-success">2. Entregas / Destaques</p>

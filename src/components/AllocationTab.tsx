@@ -293,9 +293,20 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
                           {p.allocations.map((a, i) => (
                             <div
                               key={i}
-                              className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10px] ${c.bg} ${c.text}`}
+                              className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] ${c.bg} ${c.text}`}
+                              title={`${a.projectName} · ${a.percent}% · ${a.isBillable ? 'Faturável' : 'Não faturável'}`}
                             >
-                              <span className="max-w-[180px] truncate">{a.projectName}</span>
+                              <span className="max-w-[180px] truncate font-medium">{a.projectName}</span>
+                              <span className="opacity-80">· {a.percent}%</span>
+                              <span
+                                className={`rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wide ${
+                                  a.isBillable
+                                    ? 'bg-success/20 text-success'
+                                    : 'bg-muted text-muted-foreground'
+                                }`}
+                              >
+                                {a.isBillable ? 'Billing' : 'Sem billing'}
+                              </span>
                             </div>
                           ))}
                         </div>

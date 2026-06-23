@@ -75,7 +75,7 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
         </div>
 
         <div className="mt-4">
-          <ProgressBar progress={project.progress} timelinePercent={timelinePercent} />
+          <ProgressBar progress={project.progress} timelinePercent={timelinePercent} status={project.status} />
         </div>
 
         <div className="mt-4 flex flex-wrap gap-4 text-sm text-muted-foreground">

@@ -37,7 +37,7 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{project.description}</p>
 
-      <ProgressBar progress={project.progress} timelinePercent={timelinePercent} />
+      <ProgressBar progress={project.progress} timelinePercent={timelinePercent} status={project.status} />
 
       {/* Histórico Resumido */}
       <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-3">

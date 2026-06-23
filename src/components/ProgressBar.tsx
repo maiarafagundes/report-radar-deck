@@ -1,13 +1,21 @@
+import type { ProjectStatus } from '@/types/project';
+
 interface ProgressBarProps {
   progress: number;
   timelinePercent: number;
   showLabels?: boolean;
+  status?: ProjectStatus;
 }
 
-const ProgressBar = ({ progress, timelinePercent, showLabels = true }: ProgressBarProps) => {
-  const isDelayed = timelinePercent > progress + 15;
-  const isAtRisk = timelinePercent > progress + 5 && !isDelayed;
-  const barColor = isDelayed ? 'bg-danger' : isAtRisk ? 'bg-warning' : 'bg-success';
+const ProgressBar = ({ progress, timelinePercent, showLabels = true, status }: ProgressBarProps) => {
+  let barColor: string;
+  if (status) {
+    barColor = status === 'delayed' ? 'bg-danger' : status === 'at-risk' ? 'bg-warning' : 'bg-success';
+  } else {
+    const isDelayed = timelinePercent > progress + 15;
+    const isAtRisk = timelinePercent > progress + 5 && !isDelayed;
+    barColor = isDelayed ? 'bg-danger' : isAtRisk ? 'bg-warning' : 'bg-success';
+  }
 
   return (
     <div className="space-y-1.5">

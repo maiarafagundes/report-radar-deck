@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Project, WeeklyReport, TeamMember, Professional } from '@/types/project';
+import { Mail, Phone, User as UserIcon } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import ProgressBar from './ProgressBar';
 import TeamList from './TeamList';
@@ -28,10 +29,12 @@ interface ProjectDetailProps {
   onUpdateProject?: (project: Project) => Promise<void> | void;
   onDeleteProject?: (projectId: string) => Promise<void> | void;
   onMarkCompleted?: (projectId: string) => Promise<void> | void;
+  onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
+  onUpdateBillable?: (memberId: string, isBillable: boolean) => Promise<void> | void;
   allProjects?: Project[];
 }
 
-const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, allProjects = [] }: ProjectDetailProps) => {
+const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, onUpdateAllocation, onUpdateBillable, allProjects = [] }: ProjectDetailProps) => {
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -113,6 +116,31 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
         </div>
       </div>
 
+      {/* Client Contacts */}
+      {(project.clientContacts && project.clientContacts.length > 0) && (
+        <div>
+          <h2 className="text-lg font-bold text-foreground mb-3">Equipe do Cliente ({project.clientContacts.length})</h2>
+          <div className="glass-card p-4 space-y-2">
+            {project.clientContacts.map(c => (
+              <div key={c.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-secondary/50 px-3 py-2">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <UserIcon className="h-4 w-4 text-primary shrink-0" />
+                  <span className="text-sm font-medium text-foreground truncate">{c.name}</span>
+                </div>
+                <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+                  <Mail className="h-3.5 w-3.5" />{c.email}
+                </a>
+                {c.phone && (
+                  <a href={`tel:${c.phone}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+                    <Phone className="h-3.5 w-3.5" />{c.phone}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Team */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -130,7 +158,12 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
               Nenhum profissional atrelado. Clique em "Gerenciar Equipe" para adicionar.
             </p>
           ) : (
-            <TeamList team={project.team} onMemberClick={onMemberClick} />
+            <TeamList
+              team={project.team}
+              onMemberClick={onMemberClick}
+              onUpdateAllocation={onUpdateAllocation}
+              onUpdateBillable={onUpdateBillable}
+            />
           )}
         </div>
       </div>

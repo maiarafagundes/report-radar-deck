@@ -12,7 +12,8 @@ const StatusBadge = ({ status, size = 'md' }: StatusBadgeProps) => {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${getStatusClass(status)} ${sizeClasses}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${
-        status === 'on-track' || status === 'completed' ? 'bg-success animate-pulse-slow' :
+        status === 'completed' ? 'bg-muted-foreground' :
+        status === 'on-track' ? 'bg-success animate-pulse-slow' :
         status === 'delayed' ? 'bg-danger animate-pulse-slow' :
         'bg-warning animate-pulse-slow'
       }`} />

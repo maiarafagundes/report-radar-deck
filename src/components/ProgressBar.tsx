@@ -10,7 +10,11 @@ interface ProgressBarProps {
 const ProgressBar = ({ progress, timelinePercent, showLabels = true, status }: ProgressBarProps) => {
   let barColor: string;
   if (status) {
-    barColor = status === 'delayed' ? 'bg-danger' : status === 'at-risk' ? 'bg-warning' : 'bg-success';
+    barColor =
+      status === 'completed' ? 'bg-muted-foreground' :
+      status === 'delayed' ? 'bg-danger' :
+      status === 'at-risk' ? 'bg-warning' :
+      'bg-success';
   } else {
     const isDelayed = timelinePercent > progress + 15;
     const isAtRisk = timelinePercent > progress + 5 && !isDelayed;

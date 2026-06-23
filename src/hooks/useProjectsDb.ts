@@ -8,6 +8,7 @@ import {
   mapTeamToDb,
 } from '@/lib/projectMapper';
 import { getProjectTimelinePercent } from '@/lib/projectUtils';
+import { toast } from '@/hooks/use-toast';
 
 export function useProjectsDb() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,11 +85,15 @@ export function useProjectsDb() {
     const { error } = await supabase
       .from('weekly_reports')
       .insert(mapReportToDb(projectId, report));
-    if (error) throw error;
+    if (error) {
+      toast({ title: 'Erro ao salvar status', description: error.message, variant: 'destructive' });
+      throw error;
+    }
     await supabase
       .from('projects')
       .update({ status: report.status })
       .eq('id', projectId);
+    toast({ title: 'Status semanal cadastrado com sucesso' });
     await reload();
   }, [reload]);
 

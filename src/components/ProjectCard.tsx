@@ -56,12 +56,6 @@ const ProjectCard = ({ project, onClick }: ProjectCardProps) => {
               {formatDate(latestReport.weekStart)} — {formatDate(latestReport.weekEnd)}
             </p>
             <p className="text-xs text-foreground line-clamp-2">{latestReport.summary}</p>
-            <div className="flex flex-wrap gap-3 pt-1 text-[10px] text-muted-foreground">
-              <span>✓ {latestReport.metrics.tasksCompleted}/{latestReport.metrics.tasksTotal} tarefas</span>
-              <span>🚀 {latestReport.metrics.deploymentsCount} deploys</span>
-              <span>⚠ {latestReport.metrics.incidentsResolved} incidentes</span>
-              <span>⏱ {latestReport.metrics.uptimePercent}% uptime</span>
-            </div>
           </div>
         ) : (
           <p className="text-xs italic text-muted-foreground">Nenhum status semanal cadastrado.</p>

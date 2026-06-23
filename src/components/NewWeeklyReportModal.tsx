@@ -38,7 +38,9 @@ const NewWeeklyReportModal = ({ isOpen, onClose, onCreate, projects }: Props) =>
     if (!weekStart || !weekEnd || !summary.trim()) return;
     if (projects && !projectId) return;
     const report: WeeklyReport = {
-      id: `wr-${Date.now()}`,
+      id: (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
       weekStart,
       weekEnd,
       status,

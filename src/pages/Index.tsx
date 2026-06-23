@@ -28,7 +28,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
-  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, setProjectContacts, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
   const { profile, isAdmin, isTechLead, canManageProjects, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -114,6 +114,7 @@ const Index = () => {
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
             onUpdateAllocation={canManageProjects ? (memberId, percent) => updateMemberAllocation(memberId, percent) : undefined}
             onUpdateBillable={canManageProjects ? (memberId, isBillable) => updateMemberBillable(memberId, isBillable) : undefined}
+            onUpdateContacts={canManageProjects ? (projectId, contacts) => setProjectContacts(projectId, contacts) : undefined}
             onMarkCompleted={isAdmin ? (id) => {
               const target = projects.find(pp => pp.id === id);
               if (target) updateProject({ ...target, status: 'completed', progress: 100 });

@@ -26,10 +26,20 @@ export function useProfessionalsDb() {
   }, [reload]);
 
   const deleteProfessional = useCallback(async (id: string) => {
+    const professional = professionals.find((p) => p.id === id);
+
+    if (professional) {
+      const { error: teamError } = await supabase
+        .from('team_members')
+        .delete()
+        .ilike('name', professional.name);
+      if (teamError) throw teamError;
+    }
+
     const { error } = await supabase.from('professionals').delete().eq('id', id);
     if (error) throw error;
     await reload();
-  }, [reload]);
+  }, [professionals, reload]);
 
   const updateProfessional = useCallback(async (pro: Professional) => {
     const { error } = await supabase

@@ -145,6 +145,7 @@ export type Database = {
           avatar: string | null
           created_at: string
           id: string
+          is_billable: boolean
           name: string
           project_id: string
           role: string
@@ -155,6 +156,7 @@ export type Database = {
           avatar?: string | null
           created_at?: string
           id?: string
+          is_billable?: boolean
           name: string
           project_id: string
           role?: string
@@ -165,6 +167,7 @@ export type Database = {
           avatar?: string | null
           created_at?: string
           id?: string
+          is_billable?: boolean
           name?: string
           project_id?: string
           role?: string

@@ -6,6 +6,7 @@ import {
   Briefcase, Search, Gauge,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 
 interface AllocationTabProps {
@@ -13,6 +14,7 @@ interface AllocationTabProps {
   projects: Project[];
   onProfessionalClick?: (name: string) => void;
   onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
+  onUpdateBillable?: (memberId: string, isBillable: boolean) => Promise<void> | void;
 }
 
 type Bucket = 'bench' | 'optimal' | 'overload' | 'under';
@@ -47,7 +49,7 @@ const barColor = (total: number) => {
 
 const normalizePersonName = (name: string) => name.trim().toLowerCase();
 
-const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateAllocation }: AllocationTabProps) => {
+const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateAllocation, onUpdateBillable }: AllocationTabProps) => {
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState<Bucket | 'all'>('all');
 
@@ -59,7 +61,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
       role: string;
       seniority: string;
       total: number;
-      allocations: { memberId: string; projectId: string; projectName: string; percent: number; type: string }[];
+      allocations: { memberId: string; projectId: string; projectName: string; percent: number; type: string; isBillable: boolean }[];
       isRegistered: boolean;
     }>();
 
@@ -78,8 +80,9 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
           total: 0, allocations: [], isRegistered: false,
         };
         const pct = typeof m.allocationPercent === 'number' ? m.allocationPercent : 100;
+        const billable = m.isBillable !== false;
         entry.total += pct;
-        entry.allocations.push({ memberId: m.id, projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type });
+        entry.allocations.push({ memberId: m.id, projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type, isBillable: billable });
         map.set(key, entry);
       });
     });
@@ -92,13 +95,18 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
     const total = peopleAllocation.length;
     const buckets = { bench: 0, under: 0, optimal: 0, overload: 0 };
     let sum = 0;
+    let billableSum = 0;
     peopleAllocation.forEach(p => { buckets[getBucket(p.total)]++; sum += p.total; });
+    peopleAllocation.forEach(p => {
+      p.allocations.forEach(a => { if (a.isBillable) billableSum += a.percent; });
+    });
 
     const avg = total ? Math.round(sum / total) : 0;
     const allocatedHeadcount = total - buckets.bench;
     const usedFTE = sum / 100;
+    const billableFTE = billableSum / 100;
     const capacityFTE = total; // 1 FTE por pessoa
-    const billability = capacityFTE ? Math.round((Math.min(usedFTE, capacityFTE) / capacityFTE) * 100) : 0;
+    const billability = capacityFTE ? Math.round((Math.min(billableFTE, capacityFTE) / capacityFTE) * 100) : 0;
     const idleFTE = Math.max(0, capacityFTE - usedFTE);
     const utilization = capacityFTE ? Math.round((usedFTE / capacityFTE) * 100) : 0;
 
@@ -106,7 +114,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
     const idleCapacity = peopleAllocation.reduce((acc, p) => acc + Math.max(0, 100 - p.total), 0);
     const overCapacity = peopleAllocation.reduce((acc, p) => acc + Math.max(0, p.total - 100), 0);
 
-    return { total, buckets, avg, billability, usedFTE, capacityFTE, idleFTE, utilization, idleCapacity, overCapacity, allocatedHeadcount };
+    return { total, buckets, avg, billability, usedFTE, billableFTE, capacityFTE, idleFTE, utilization, idleCapacity, overCapacity, allocatedHeadcount };
   }, [peopleAllocation]);
 
   /** Per-project totals */
@@ -144,7 +152,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <KpiCard icon={<Users className="h-5 w-5 text-primary" />} label="Profissionais" value={kpis.total} hint={`${kpis.allocatedHeadcount} alocados`} />
         <KpiCard icon={<Gauge className="h-5 w-5 text-primary" />} label="Utilização Média" value={`${kpis.avg}%`} hint="Por profissional" valueClass={allocationClasses(kpis.avg)} />
-        <KpiCard icon={<Activity className="h-5 w-5 text-primary" />} label="Billability" value={`${kpis.billability}%`} hint="FTE alocado / capacidade" />
+        <KpiCard icon={<Activity className="h-5 w-5 text-primary" />} label="Billability" value={`${kpis.billability}%`} hint={`${kpis.billableFTE.toFixed(1)} FTE faturável / ${kpis.capacityFTE}`} />
         <KpiCard icon={<Briefcase className="h-5 w-5 text-primary" />} label="FTE Em Uso" value={kpis.usedFTE.toFixed(1)} hint={`de ${kpis.capacityFTE} FTE`} />
         <KpiCard icon={<TrendingDown className="h-5 w-5 text-primary" />} label="Capacidade Ociosa" value={`${kpis.idleFTE.toFixed(1)} FTE`} hint="Disponível" valueClass="text-primary" />
         <KpiCard icon={<AlertTriangle className="h-5 w-5 text-danger" />} label="Sobrecarga" value={`${kpis.overCapacity}%`} hint={`${kpis.buckets.overload} pessoa(s)`} valueClass="text-danger" />
@@ -289,8 +297,24 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateA
                           {p.allocations.map((a, i) => (
                             <div
                               key={i}
-                              className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] ${c.bg} ${c.text}`}
+                              className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[10px] ${c.bg} ${c.text}`}
                             >
+                              {onUpdateBillable ? (
+                                <label
+                                  className="inline-flex items-center gap-1 cursor-pointer"
+                                  title={a.isBillable ? 'Faturável: alocação contabiliza no billing' : 'Não faturável: não conta no billing'}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Checkbox
+                                    checked={a.isBillable}
+                                    onCheckedChange={(v) => onUpdateBillable(a.memberId, !!v)}
+                                    className="h-3 w-3"
+                                  />
+                                  <span className="text-[9px] uppercase tracking-wide">bill</span>
+                                </label>
+                              ) : (
+                                <span className="text-[9px] uppercase tracking-wide opacity-70">{a.isBillable ? 'bill' : 'n/bill'}</span>
+                              )}
                               <span className="max-w-[160px] truncate">{a.projectName}</span>
                               {onUpdateAllocation ? (
                                 <>

@@ -122,6 +122,18 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
+  const updateMemberBillable = useCallback(async (memberId: string, isBillable: boolean) => {
+    const { error } = await supabase
+      .from('team_members')
+      .update({ is_billable: isBillable })
+      .eq('id', memberId);
+    if (error) {
+      toast({ title: 'Erro ao atualizar billing', description: error.message, variant: 'destructive' });
+      throw error;
+    }
+    await reload();
+  }, [reload]);
+
   const updateProject = useCallback(async (p: Project) => {
     const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
     if (error) throw error;
@@ -157,5 +169,5 @@ export function useProjectsDb() {
     await reload();
   }, [reload]);
 
-  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, bulkUpsertProjects };
+  return { projects, loading, reload, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, bulkUpsertProjects };
 }

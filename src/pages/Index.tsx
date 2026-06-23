@@ -28,7 +28,7 @@ const statusFilters: { label: string; value: ProjectStatus | 'all' }[] = [
 type TabView = 'dashboard' | 'projects' | 'team' | 'allocation';
 
 const Index = () => {
-  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, bulkUpsertProjects } = useProjectsDb();
+  const { projects, reload: reloadProjects, createProject, updateProject, deleteProject, addReport, setProjectTeam, updateMemberAllocation, updateMemberBillable, bulkUpsertProjects } = useProjectsDb();
   const { professionals, reload: reloadProfessionals, bulkUpsert: bulkUpsertProfessionals, deleteProfessional, updateProfessional } = useProfessionalsDb();
   const { profile, isAdmin, isTechLead, canManageProjects, signOut } = useAuth();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -241,6 +241,7 @@ const Index = () => {
             projects={projects}
             onProfessionalClick={handleProfessionalClick}
             onUpdateAllocation={(memberId, percent) => updateMemberAllocation(memberId, percent)}
+            onUpdateBillable={(memberId, isBillable) => updateMemberBillable(memberId, isBillable)}
           />
         )}
 

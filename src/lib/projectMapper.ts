@@ -56,6 +56,7 @@ export function mapTeamFromDb(t: DbTeam): TeamMember {
     seniority: t.seniority,
     avatar: t.avatar ?? undefined,
     allocationPercent: typeof t.allocation_percent === 'number' ? t.allocation_percent : 100,
+    isBillable: t.is_billable !== false,
   };
 }
 
@@ -68,6 +69,7 @@ export function mapTeamToDb(projectId: string, m: TeamMember) {
     seniority: m.seniority,
     avatar: m.avatar ?? null,
     allocation_percent: m.allocationPercent ?? 100,
+    is_billable: m.isBillable !== false,
   };
 }
 

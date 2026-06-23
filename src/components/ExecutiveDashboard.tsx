@@ -1,19 +1,37 @@
 import { useMemo, useState } from 'react';
 import { Project, Professional } from '@/types/project';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck, X } from 'lucide-react';
-import AIExecutiveSummary from './AIExecutiveSummary';
+import { AlertTriangle, CheckCircle, AlertCircle, FolderKanban, Wrench, Briefcase, ShieldCheck, UserCheck, X, FileDown } from 'lucide-react';
+import AIExecutiveSummary, { Summary } from './AIExecutiveSummary';
 import LiveStatusBoard from './LiveStatusBoard';
+import { Button } from '@/components/ui/button';
+import { exportDashboardPptx } from '@/lib/pptxExport';
+import { toast } from 'sonner';
 
 interface ExecutiveDashboardProps {
   projects: Project[];
   professionals: Professional[];
   onProfessionalClick: (name: string) => void;
   onProjectClick: (id: string) => void;
+  canRefreshSummary?: boolean;
 }
 
-const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onProjectClick }: ExecutiveDashboardProps) => {
+const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onProjectClick, canRefreshSummary = false }: ExecutiveDashboardProps) => {
   const [selectedSituation, setSelectedSituation] = useState<null | 'stable' | 'atRisk' | 'critical'>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      await exportDashboardPptx(projects, summary);
+      toast.success('Apresentação exportada com sucesso');
+    } catch (e: any) {
+      toast.error('Falha ao exportar apresentação: ' + (e?.message || e));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const situationStyles = {
     success: {
@@ -95,8 +113,14 @@ const ExecutiveDashboard = ({ projects, professionals, onProfessionalClick, onPr
 
   return (
     <div className="space-y-6 animate-slide-in">
+      <div className="flex justify-end">
+        <Button size="sm" variant="outline" className="gap-2" onClick={handleExport} disabled={exporting}>
+          <FileDown className="h-4 w-4" />
+          {exporting ? 'Exportando...' : 'Exportar apresentação'}
+        </Button>
+      </div>
       <LiveStatusBoard projects={projects} onProjectClick={onProjectClick} />
-      <AIExecutiveSummary projects={projects} />
+      <AIExecutiveSummary projects={projects} canRefresh={canRefreshSummary} onSummaryChange={setSummary} />
       {/* Modelos de Atendimento */}
       <div>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Modelos de Atendimento</h2>

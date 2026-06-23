@@ -6,6 +6,7 @@ import {
   mapProjectToDb,
   mapReportToDb,
   mapTeamToDb,
+  mapContactToDb,
 } from '@/lib/projectMapper';
 import { getProjectTimelinePercent } from '@/lib/projectUtils';
 import { toast } from '@/hooks/use-toast';
@@ -16,10 +17,11 @@ export function useProjectsDb() {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const [{ data: projs }, { data: teams }, { data: reports }] = await Promise.all([
+    const [{ data: projs }, { data: teams }, { data: reports }, { data: contacts }] = await Promise.all([
       supabase.from('projects').select('*').order('created_at', { ascending: false }),
       supabase.from('team_members').select('*'),
       supabase.from('weekly_reports').select('*'),
+      supabase.from('client_contacts').select('*'),
     ]);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -28,6 +30,7 @@ export function useProjectsDb() {
         p,
         (teams ?? []).filter(t => t.project_id === p.id),
         (reports ?? []).filter(r => r.project_id === p.id),
+        (contacts ?? []).filter(c => c.project_id === p.id),
       );
       // Progresso é sempre derivado de início/fim/hoje (cap 100%)
       if (proj.startDate && proj.endDate) {
@@ -62,6 +65,7 @@ export function useProjectsDb() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, trigger)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'team_members' }, trigger)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_reports' }, trigger)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'client_contacts' }, trigger)
       .subscribe();
     return () => {
       if (debounce) clearTimeout(debounce);
@@ -77,6 +81,12 @@ export function useProjectsDb() {
         .from('team_members')
         .insert(p.team.map(m => mapTeamToDb(p.id, m)));
       if (e2) throw e2;
+    }
+    if (p.clientContacts && p.clientContacts.length) {
+      const { error: e3 } = await supabase
+        .from('client_contacts')
+        .insert(p.clientContacts.map(c => mapContactToDb(p.id, c)));
+      if (e3) throw e3;
     }
     await reload();
   }, [reload]);
@@ -137,6 +147,12 @@ export function useProjectsDb() {
   const updateProject = useCallback(async (p: Project) => {
     const { error } = await supabase.from('projects').update(mapProjectToDb(p)).eq('id', p.id);
     if (error) throw error;
+    if (p.clientContacts) {
+      await supabase.from('client_contacts').delete().eq('project_id', p.id);
+      if (p.clientContacts.length) {
+        await supabase.from('client_contacts').insert(p.clientContacts.map(c => mapContactToDb(p.id, c)));
+      }
+    }
     await reload();
   }, [reload]);
 

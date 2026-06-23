@@ -1,4 +1,4 @@
-import { Project, WeeklyReport, TeamMember, Professional } from '@/types/project';
+import { Project, WeeklyReport, TeamMember, Professional, ClientContact } from '@/types/project';
 
 type DbProject = any;
 type DbTeam = any;
@@ -73,7 +73,26 @@ export function mapTeamToDb(projectId: string, m: TeamMember) {
   };
 }
 
-export function mapProjectFromDb(p: DbProject, team: DbTeam[] = [], reports: DbReport[] = []): Project {
+export function mapContactFromDb(c: any): ClientContact {
+  return {
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    phone: c.phone ?? undefined,
+  };
+}
+
+export function mapContactToDb(projectId: string, c: ClientContact) {
+  return {
+    id: c.id,
+    project_id: projectId,
+    name: c.name,
+    email: c.email,
+    phone: c.phone ?? null,
+  };
+}
+
+export function mapProjectFromDb(p: DbProject, team: DbTeam[] = [], reports: DbReport[] = [], contacts: any[] = []): Project {
   return {
     id: p.id,
     name: p.name,
@@ -89,6 +108,7 @@ export function mapProjectFromDb(p: DbProject, team: DbTeam[] = [], reports: DbR
     weeklyReports: reports
       .sort((a, b) => (b.week_start || '').localeCompare(a.week_start || ''))
       .map(mapReportFromDb),
+    clientContacts: contacts.map(mapContactFromDb),
   };
 }
 

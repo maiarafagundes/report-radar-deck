@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Clock, XCircle, UserCog } from 'lucide-react';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, profile, isAdmin, loading, signOut } = useAuth();
+  const { user, profile, isAdmin, isStakeholder, loading, signOut } = useAuth();
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -41,7 +41,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
   }
 
   // Profissional aprovado mas ainda sem vínculo a um perfil/projeto
-  if (!isAdmin && profile.status === 'approved' && !profile.professional_id) {
+  if (!isAdmin && !isStakeholder && profile.status === 'approved' && !profile.professional_id) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="glass-card max-w-md p-8 text-center">

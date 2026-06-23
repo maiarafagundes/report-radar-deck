@@ -6,11 +6,13 @@ import {
   Briefcase, Search, Gauge,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 interface AllocationTabProps {
   professionals: Professional[];
   projects: Project[];
   onProfessionalClick?: (name: string) => void;
+  onUpdateAllocation?: (memberId: string, percent: number) => Promise<void> | void;
 }
 
 type Bucket = 'bench' | 'optimal' | 'overload' | 'under';
@@ -45,7 +47,7 @@ const barColor = (total: number) => {
 
 const normalizePersonName = (name: string) => name.trim().toLowerCase();
 
-const AllocationTab = ({ professionals, projects, onProfessionalClick }: AllocationTabProps) => {
+const AllocationTab = ({ professionals, projects, onProfessionalClick, onUpdateAllocation }: AllocationTabProps) => {
   const [search, setSearch] = useState('');
   const [bucketFilter, setBucketFilter] = useState<Bucket | 'all'>('all');
 
@@ -57,7 +59,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
       role: string;
       seniority: string;
       total: number;
-      allocations: { projectId: string; projectName: string; percent: number; type: string }[];
+      allocations: { memberId: string; projectId: string; projectName: string; percent: number; type: string }[];
       isRegistered: boolean;
     }>();
 
@@ -77,7 +79,7 @@ const AllocationTab = ({ professionals, projects, onProfessionalClick }: Allocat
         };
         const pct = typeof m.allocationPercent === 'number' ? m.allocationPercent : 100;
         entry.total += pct;
-        entry.allocations.push({ projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type });
+        entry.allocations.push({ memberId: m.id, projectId: proj.id, projectName: proj.name, percent: pct, type: proj.type });
         map.set(key, entry);
       });
     });

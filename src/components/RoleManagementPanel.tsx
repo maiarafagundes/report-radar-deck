@@ -69,6 +69,8 @@ export default function RoleManagementPanel() {
           {rows.map((r) => {
             const isAdmin = r.role === 'admin';
             const isSelf = user?.id === r.id;
+            const canEditSelf = (user?.email ?? '').toLowerCase() === 'renan.alves@v8.tech';
+            const lockSelf = isSelf && !canEditSelf;
             const label = r.role === 'admin' ? 'Administrador' : r.role === 'tech_lead' ? 'Tech Lead' : r.role === 'stakeholder' ? 'Stakeholder' : 'Sem perfil';
             const Icon = isAdmin ? ShieldCheck : r.role === 'stakeholder' ? Eye : Shield;
             return (
@@ -84,10 +86,10 @@ export default function RoleManagementPanel() {
                   </span>
                   <Select
                     value={r.role ?? undefined}
-                    disabled={busy === r.id || isSelf}
+                    disabled={busy === r.id || lockSelf}
                     onValueChange={(v) => setRole(r.id, v as Role)}
                   >
-                    <SelectTrigger className="h-7 text-xs w-[150px]" title={isSelf ? 'Você não pode alterar seu próprio perfil' : ''}>
+                    <SelectTrigger className="h-7 text-xs w-[150px]" title={lockSelf ? 'Você não pode alterar seu próprio perfil' : ''}>
                       {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <SelectValue placeholder="Definir perfil" />}
                     </SelectTrigger>
                     <SelectContent>

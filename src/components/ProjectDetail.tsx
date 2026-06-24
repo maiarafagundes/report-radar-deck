@@ -16,6 +16,7 @@ import { generateProjectPDF, generateWeeklyReportPDF } from '@/lib/pdfExport';
 import NewWeeklyReportModal from './NewWeeklyReportModal';
 import ManageTeamModal from './ManageTeamModal';
 import NewProjectModal from './NewProjectModal';
+import { useAuth } from '@/hooks/useAuth';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -38,6 +39,7 @@ interface ProjectDetailProps {
 }
 
 const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, professionals = [], onUpdateTeam, onUpdateProject, onDeleteProject, onMarkCompleted, onUpdateAllocation, onUpdateBillable, onUpdateContacts, allProjects = [] }: ProjectDetailProps) => {
+  const { isAdmin } = useAuth();
   const timelinePercent = getProjectTimelinePercent(project.startDate, project.endDate);
   const daysRemaining = getDaysRemaining(project.endDate);
   const latestReport = project.weeklyReports[0];
@@ -235,7 +237,7 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-foreground">Equipe Ativa ({project.team.length})</h2>
-          {onUpdateTeam && (
+          {onUpdateTeam && isAdmin && (
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setTeamOpen(true)}>
               <UserPlus className="h-4 w-4" />
               Gerenciar Equipe

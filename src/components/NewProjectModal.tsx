@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getProjectTimelinePercent } from '@/lib/projectUtils';
 import { Plus, Trash2, Search } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -36,6 +37,8 @@ const statuses: { value: ProjectStatus; label: string }[] = [
 
 const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject, professionals = [] }: NewProjectModalProps) => {
   const isEdit = !!initialProject;
+  const { isAdmin } = useAuth();
+  const canEditTeam = isAdmin;
   const [name, setName] = useState('');
   const [category, setCategory] = useState<Project['category']>('Infrastructure');
   const [type, setType] = useState<ProjectType>('projeto');
@@ -231,7 +234,11 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject, profession
             {/* Equipe interna */}
             <div className="col-span-2 border-t border-border pt-4">
               <Label>Equipe Interna (opcional)</Label>
-              <p className="text-[11px] text-muted-foreground mb-2">Marque os profissionais e defina a alocação (%) e se a hora será faturada.</p>
+              <p className="text-[11px] text-muted-foreground mb-2">
+                {canEditTeam
+                  ? 'Marque os profissionais e defina a alocação (%) e se a hora será faturada.'
+                  : 'Apenas administradores podem alterar a equipe interna. Visualização somente.'}
+              </p>
               {team.length > 0 && (
                 <div className="space-y-2 mb-3">
                   {team.map(m => (
@@ -246,25 +253,29 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject, profession
                           value={m.allocationPercent ?? 0}
                           onChange={(e) => updateMember(m.id, { allocationPercent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })}
                           className="h-7 w-16 text-xs px-2"
+                          disabled={!canEditTeam}
                         />
                         <span className="text-xs text-muted-foreground">%</span>
                       </div>
-                      <label className="inline-flex items-center gap-1 cursor-pointer">
+                      <label className={`inline-flex items-center gap-1 ${canEditTeam ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}>
                         <Checkbox
                           checked={m.isBillable !== false}
                           onCheckedChange={(v) => updateMember(m.id, { isBillable: !!v })}
                           className="h-4 w-4"
+                          disabled={!canEditTeam}
                         />
                         <span className="text-[11px] text-muted-foreground">Billing</span>
                       </label>
-                      <button type="button" onClick={() => setTeam(prev => prev.filter(t => t.id !== m.id))} className="text-muted-foreground hover:text-danger">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {canEditTeam && (
+                        <button type="button" onClick={() => setTeam(prev => prev.filter(t => t.id !== m.id))} className="text-muted-foreground hover:text-danger">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
-              {professionals.length > 0 && (
+              {canEditTeam && professionals.length > 0 && (
                 <div className="space-y-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />

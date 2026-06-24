@@ -104,11 +104,11 @@ const Index = () => {
             onAddReport={canManageProjects ? (projectId, report) => { addReport(projectId, report); } : undefined}
             professionals={professionals}
             allProjects={projects}
-            onUpdateTeam={canManageProjects ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
+            onUpdateTeam={isAdmin ? (projectId, team) => setProjectTeam(projectId, team) : undefined}
             onUpdateProject={canManageProjects ? (p) => updateProject(p) : undefined}
             onDeleteProject={isAdmin ? (id) => deleteProject(id) : undefined}
-            onUpdateAllocation={canManageProjects ? (memberId, percent) => updateMemberAllocation(memberId, percent) : undefined}
-            onUpdateBillable={canManageProjects ? (memberId, isBillable) => updateMemberBillable(memberId, isBillable) : undefined}
+            onUpdateAllocation={isAdmin ? (memberId, percent) => updateMemberAllocation(memberId, percent) : undefined}
+            onUpdateBillable={isAdmin ? (memberId, isBillable) => updateMemberBillable(memberId, isBillable) : undefined}
             onUpdateContacts={canManageProjects ? (projectId, contacts) => setProjectContacts(projectId, contacts) : undefined}
             onMarkCompleted={isAdmin ? (id) => {
               const target = projects.find(pp => pp.id === id);

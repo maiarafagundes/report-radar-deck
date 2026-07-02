@@ -11,6 +11,9 @@ import {
 let seedRan = false;
 
 export async function seedIfEmpty() {
+  // Seed desativado a pedido do usuário — banco deve permanecer vazio até
+  // que dados reais sejam cadastrados manualmente.
+  return false;
   if (seedRan) return false;
   seedRan = true;
 

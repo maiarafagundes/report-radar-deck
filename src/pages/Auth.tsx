@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,10 @@ export default function Auth() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rawNext = searchParams.get('next');
+  // Only allow same-origin relative paths as post-auth redirect targets.
+  const nextPath = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +27,7 @@ export default function Auth() {
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={nextPath} replace />;
 
   const validateDomain = () => {
     if (!email.toLowerCase().endsWith(ALLOWED_DOMAIN)) {
@@ -38,7 +42,7 @@ export default function Auth() {
     if (password.length < 6) { toast({ title: 'Senha curta', description: 'Mínimo 6 caracteres', variant: 'destructive' }); return; }
     setBusy(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}${nextPath}`;
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -48,7 +52,7 @@ export default function Auth() {
       const { error: bootErr } = await supabase.rpc('bootstrap_profile' as any, { _full_name: fullName });
       if (bootErr) throw bootErr;
       toast({ title: 'Conta criada!', description: 'Aguardando aprovação de um administrador.' });
-      navigate('/', { replace: true });
+      navigate(nextPath, { replace: true });
     } catch (e: any) {
       toast({ title: 'Erro ao criar conta', description: e?.message ?? '', variant: 'destructive' });
     } finally { setBusy(false); }
@@ -61,7 +65,7 @@ export default function Auth() {
       if (error) throw error;
       // ensure profile exists (defensive)
       await supabase.rpc('bootstrap_profile' as any, { _full_name: '' });
-      navigate('/', { replace: true });
+      navigate(nextPath, { replace: true });
     } catch (e: any) {
       toast({ title: 'Erro ao entrar', description: e?.message ?? '', variant: 'destructive' });
     } finally { setBusy(false); }

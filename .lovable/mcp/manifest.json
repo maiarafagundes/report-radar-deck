@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://ptygtpizvgtzlhmxpwpb.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "v8-portfolio-mcp",
+      "version": "0.1.0",
+      "title": "V8 Portfolio MCP"
+    },
+    "tools": [
+      {
+        "name": "me",
+        "title": "Who am I",
+        "description": "Return the signed-in user's profile and roles in this app.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_projects",
+        "title": "List projects",
+        "description": "List DevOps/SRE portfolio projects the signed-in user can see. Tech leads only see projects they are allocated to; admins and stakeholders see all.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "on-track",
+                "at-risk",
+                "delayed",
+                "completed"
+              ],
+              "description": "Optional status filter."
+            },
+            "limit": {
+              "default": 50,
+              "description": "Max rows returned.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_project",
+        "title": "Get project",
+        "description": "Fetch a single project by id with its team, client contacts, and latest weekly reports.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "Project UUID."
+            },
+            "reports_limit": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "project_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_weekly_reports",
+        "title": "List weekly reports",
+        "description": "List weekly status reports for a project, newest first.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "limit": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "project_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_weekly_report",
+        "title": "Create weekly report",
+        "description": "Create a weekly status report for a project. Requires admin or tech lead role (enforced by RLS).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "project_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "week_start": {
+              "type": "string",
+              "description": "ISO date YYYY-MM-DD"
+            },
+            "week_end": {
+              "type": "string",
+              "description": "ISO date YYYY-MM-DD"
+            },
+            "status": {
+              "default": "on-track",
+              "type": "string",
+              "enum": [
+                "on-track",
+                "at-risk",
+                "delayed",
+                "completed"
+              ]
+            },
+            "summary": {
+              "default": "",
+              "type": "string"
+            },
+            "highlights": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "blockers": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in_progress": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "next_steps": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "indicators": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "project_id",
+            "week_start",
+            "week_end"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_professionals",
+        "title": "List professionals",
+        "description": "List internal team professionals (name, role, seniority).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "limit": {
+              "default": 200,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_executive_summary",
+        "title": "Get latest executive summary",
+        "description": "Return the most recent AI-generated executive summary of the project portfolio. Admins and stakeholders only.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

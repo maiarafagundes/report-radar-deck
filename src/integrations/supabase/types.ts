@@ -245,6 +245,33 @@ export type Database = {
           },
         ]
       }
+      user_invites: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          email: string
+          full_name: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          full_name?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -347,6 +374,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      invite_user: {
+        Args: {
+          _email: string
+          _full_name: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
       }
       link_profile_to_professional: {
         Args: { _professional_id: string; _user_id: string }

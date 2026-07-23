@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Shield, ShieldCheck, Eye, Users2, Loader2 } from 'lucide-react';
+import { Shield, ShieldCheck, Eye, Users2, Loader2, UserPlus, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 type Role = 'admin' | 'tech_lead' | 'stakeholder';
 
@@ -20,12 +24,17 @@ export default function RoleManagementPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [invites, setInvites] = useState<Array<{ email: string; full_name: string; role: Role; consumed_at: string | null }>>([]);
+  const [form, setForm] = useState<{ email: string; full_name: string; role: Role }>({ email: '', full_name: '', role: 'tech_lead' });
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: profiles }, { data: roles }] = await Promise.all([
+    const [{ data: profiles }, { data: roles }, { data: inv }] = await Promise.all([
       supabase.from('profiles' as any).select('id,email,full_name,status').eq('status', 'approved'),
       supabase.from('user_roles' as any).select('user_id,role'),
+      supabase.from('user_invites' as any).select('email,full_name,role,consumed_at').order('created_at', { ascending: false }),
     ]);
     const roleByUser = new Map<string, Role>();
     ((roles as any[]) ?? []).forEach((r) => roleByUser.set(r.user_id, r.role));
@@ -37,10 +46,36 @@ export default function RoleManagementPanel() {
     }));
     list.sort((a, b) => a.full_name.localeCompare(b.full_name));
     setRows(list);
+    setInvites(((inv as any[]) ?? []) as any);
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const submitInvite = async () => {
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^@\s]+@v8\.tech$/.test(email)) {
+      toast({ title: 'Email inválido', description: 'Use um email @v8.tech.', variant: 'destructive' });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.rpc('invite_user' as any, { _email: email, _full_name: form.full_name.trim(), _role: form.role });
+      if (error) throw error;
+      toast({ title: 'Convite criado', description: `${email} entrará já aprovado(a) ao se cadastrar.` });
+      setForm({ email: '', full_name: '', role: 'tech_lead' });
+      setInviteOpen(false);
+      await load();
+    } catch (e: any) {
+      toast({ title: 'Erro ao convidar', description: e?.message ?? '', variant: 'destructive' });
+    } finally { setSubmitting(false); }
+  };
+
+  const removeInvite = async (email: string) => {
+    const { error } = await supabase.from('user_invites' as any).delete().eq('email', email);
+    if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
+    await load();
+  };
 
   const setRole = async (userId: string, role: Role) => {
     setBusy(userId);
@@ -56,10 +91,32 @@ export default function RoleManagementPanel() {
 
   return (
     <div className="glass-card p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Users2 className="h-4 w-4 text-primary" />
-        <h3 className="text-sm font-bold">Perfis de acesso ({rows.length})</h3>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <Users2 className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-bold">Perfis de acesso ({rows.length})</h3>
+        </div>
+        <Button size="sm" className="h-7 gap-1" onClick={() => setInviteOpen(true)}>
+          <UserPlus className="h-3.5 w-3.5" /> Convidar usuário
+        </Button>
       </div>
+
+      {invites.filter(i => !i.consumed_at).length > 0 && (
+        <div className="mb-3 rounded-lg border border-border/60 bg-secondary/30 p-2">
+          <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">Convites pendentes</p>
+          <ul className="space-y-1">
+            {invites.filter(i => !i.consumed_at).map(i => (
+              <li key={i.email} className="flex items-center justify-between gap-2 text-xs">
+                <span className="truncate"><span className="font-medium">{i.email}</span> <span className="text-muted-foreground">— {i.role === 'admin' ? 'Administrador' : i.role === 'tech_lead' ? 'Tech Lead' : 'Stakeholder'}</span></span>
+                <button onClick={() => removeInvite(i.email)} className="text-muted-foreground hover:text-destructive" title="Remover convite">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
       ) : rows.length === 0 ? (

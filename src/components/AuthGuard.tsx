@@ -40,21 +40,5 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     );
   }
 
-  // Profissional aprovado mas ainda sem vínculo a um perfil/projeto
-  if (!isAdmin && !isStakeholder && profile.status === 'approved' && !profile.professional_id) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="glass-card max-w-md p-8 text-center">
-          <UserCog className="mx-auto h-10 w-10 text-warning mb-3" />
-          <h2 className="text-lg font-bold mb-2">Aguardando vinculação</h2>
-          <p className="text-sm text-muted-foreground mb-6">
-            Seu acesso foi aprovado. Um administrador ainda precisa vincular você a um profissional para liberar os projetos.
-          </p>
-          <Button variant="outline" onClick={signOut}>Sair</Button>
-        </div>
-      </div>
-    );
-  }
-
   return <>{children}</>;
 }

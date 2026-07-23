@@ -161,6 +161,44 @@ export default function RoleManagementPanel() {
           })}
         </ul>
       )}
+
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Convidar usuário</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Email (@v8.tech)</Label>
+              <Input value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} placeholder="nome@v8.tech" />
+            </div>
+            <div>
+              <Label className="text-xs">Nome</Label>
+              <Input value={form.full_name} onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder="Nome completo" />
+            </div>
+            <div>
+              <Label className="text-xs">Cargo</Label>
+              <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v as Role }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="tech_lead">Tech Lead</SelectItem>
+                  <SelectItem value="stakeholder">Stakeholder</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              A pessoa se cadastra em /auth com esse email e entra já aprovada com o cargo definido — sem envio de email.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setInviteOpen(false)} disabled={submitting}>Cancelar</Button>
+            <Button onClick={submitInvite} disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Convidar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

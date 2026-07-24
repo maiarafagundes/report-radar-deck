@@ -182,9 +182,10 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
                 ) : (
                   draftContacts.map(c => (
                     <div key={c.id} className="grid grid-cols-12 gap-2 items-center">
-                      <Input className="col-span-4 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateDraftContact(c.id, { name: e.target.value })} />
-                      <Input className="col-span-4 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateDraftContact(c.id, { email: e.target.value })} />
-                      <Input className="col-span-3 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateDraftContact(c.id, { phone: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateDraftContact(c.id, { name: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Cargo" value={c.role ?? ''} onChange={(e) => updateDraftContact(c.id, { role: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateDraftContact(c.id, { email: e.target.value })} />
+                      <Input className="col-span-2 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateDraftContact(c.id, { phone: e.target.value })} />
                       <button type="button" onClick={() => removeDraftContact(c.id)} className="col-span-1 text-muted-foreground hover:text-destructive">
                         <Trash2 className="h-4 w-4 mx-auto" />
                       </button>
@@ -216,6 +217,9 @@ const ProjectDetail = ({ project, onBack, onMemberClick, onAddReport, profession
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <UserIcon className="h-4 w-4 text-primary shrink-0" />
                       <span className="text-sm font-medium text-foreground truncate">{c.name}</span>
+                      {c.role && (
+                        <span className="text-xs text-muted-foreground truncate">· {c.role}</span>
+                      )}
                     </div>
                     <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
                       <Mail className="h-3.5 w-3.5" />{c.email}

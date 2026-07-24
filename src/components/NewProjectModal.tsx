@@ -193,9 +193,10 @@ const NewProjectModal = ({ isOpen, onClose, onCreate, initialProject, profession
                 <div className="space-y-2">
                   {contacts.map(c => (
                     <div key={c.id} className="grid grid-cols-12 gap-2 items-center">
-                      <Input className="col-span-4 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateContact(c.id, { name: e.target.value })} />
-                      <Input className="col-span-4 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateContact(c.id, { email: e.target.value })} />
-                      <Input className="col-span-3 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateContact(c.id, { phone: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Nome *" value={c.name} onChange={(e) => updateContact(c.id, { name: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="Cargo" value={c.role ?? ''} onChange={(e) => updateContact(c.id, { role: e.target.value })} />
+                      <Input className="col-span-3 h-8 text-sm" placeholder="E-mail *" type="email" value={c.email} onChange={(e) => updateContact(c.id, { email: e.target.value })} />
+                      <Input className="col-span-2 h-8 text-sm" placeholder="Telefone" value={c.phone ?? ''} onChange={(e) => updateContact(c.id, { phone: e.target.value })} />
                       <button type="button" onClick={() => removeContact(c.id)} className="col-span-1 text-muted-foreground hover:text-danger">
                         <Trash2 className="h-4 w-4 mx-auto" />
                       </button>

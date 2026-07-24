@@ -79,6 +79,7 @@ export function mapContactFromDb(c: any): ClientContact {
     name: c.name,
     email: c.email,
     phone: c.phone ?? undefined,
+    role: c.role ?? undefined,
   };
 }
 
@@ -89,6 +90,7 @@ export function mapContactToDb(projectId: string, c: ClientContact) {
     name: c.name,
     email: c.email,
     phone: c.phone ?? null,
+    role: c.role ?? null,
   };
 }
 

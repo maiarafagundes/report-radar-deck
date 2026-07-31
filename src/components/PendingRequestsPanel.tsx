@@ -41,13 +41,10 @@ export default function PendingRequestsPanel({ onApproved }: { onApproved?: () =
     try {
       if (status === 'approved') {
         const proId = linkChoice[id];
-        if (!proId) {
-          toast({ title: 'Selecione um profissional', description: 'Vincule um profissional antes de aprovar.', variant: 'destructive' });
-          setBusyId(null);
-          return;
+        if (proId) {
+          const { error: linkErr } = await supabase.rpc('link_profile_to_professional' as any, { _user_id: id, _professional_id: proId });
+          if (linkErr) throw linkErr;
         }
-        const { error: linkErr } = await supabase.rpc('link_profile_to_professional' as any, { _user_id: id, _professional_id: proId });
-        if (linkErr) throw linkErr;
       }
       const { error } = await supabase.rpc('set_profile_status' as any, { _user_id: id, _status: status });
       if (error) throw error;

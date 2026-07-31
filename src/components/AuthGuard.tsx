@@ -1,16 +1,33 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Loader2, Clock, XCircle, UserCog } from 'lucide-react';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-  const { user, profile, isAdmin, isStakeholder, loading, signOut } = useAuth();
+  const { user, profile, isAdmin, isStakeholder, loading, signOut, refreshProfile } = useAuth();
+  const [retries, setRetries] = useState(0);
+
+  // O perfil é criado logo após o cadastro; se ainda não chegou, tenta de novo
+  // antes de mostrar qualquer tela de bloqueio.
+  useEffect(() => {
+    if (!loading && user && !profile && retries < 5) {
+      const t = setTimeout(() => {
+        refreshProfile();
+        setRetries((r) => r + 1);
+      }, 800);
+      return () => clearTimeout(t);
+    }
+  }, [loading, user, profile, retries, refreshProfile]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
   if (!user) return <Navigate to="/auth" replace />;
+
+  if (!profile && retries < 5) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  }
 
   if (!profile || profile.status === 'pending') {
     return (

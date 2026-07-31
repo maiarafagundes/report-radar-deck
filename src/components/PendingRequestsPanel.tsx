@@ -79,7 +79,7 @@ export default function PendingRequestsPanel({ onApproved }: { onApproved?: () =
                   value={linkChoice[p.id] ?? ''}
                   onValueChange={(v) => setLinkChoice(prev => ({ ...prev, [p.id]: v }))}
                 >
-                  <SelectTrigger className="h-7 w-48 text-xs"><SelectValue placeholder="Vincular profissional..." /></SelectTrigger>
+                  <SelectTrigger className="h-7 w-48 text-xs"><SelectValue placeholder="Vincular profissional (opcional)" /></SelectTrigger>
                   <SelectContent>
                     {professionals.map(pr => (
                       <SelectItem key={pr.id} value={pr.id}>{pr.name}</SelectItem>

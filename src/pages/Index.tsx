@@ -12,6 +12,7 @@ import AllocationTab from '@/components/AllocationTab';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ const Index = () => {
   const [dateTo, setDateTo] = useState('');
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [weeklyReportOpen, setWeeklyReportOpen] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>(
     isAdmin || isStakeholder ? 'dashboard' : 'projects'
   );

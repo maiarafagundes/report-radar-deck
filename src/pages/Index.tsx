@@ -322,6 +322,7 @@ const Index = () => {
         onCreate={(report, projectId) => { if (projectId) addReport(projectId, report); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
+      <ChangePasswordModal isOpen={pwdOpen} onClose={() => setPwdOpen(false)} />
     </div>
   );
 };

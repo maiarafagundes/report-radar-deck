@@ -12,6 +12,7 @@ import AllocationTab from '@/components/AllocationTab';
 import NewProjectModal from '@/components/NewProjectModal';
 import ThemeToggle from '@/components/ThemeToggle';
 import NewWeeklyReportModal from '@/components/NewWeeklyReportModal';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ const Index = () => {
   const [dateTo, setDateTo] = useState('');
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [weeklyReportOpen, setWeeklyReportOpen] = useState(false);
+  const [pwdOpen, setPwdOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabView>(
     isAdmin || isStakeholder ? 'dashboard' : 'projects'
   );
@@ -141,6 +143,9 @@ const Index = () => {
               </div>
             )}
             <ThemeToggle />
+            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setPwdOpen(true)}>
+              Alterar senha
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={signOut}>
               <LogOut className="h-3.5 w-3.5" />
               Sair
@@ -317,6 +322,7 @@ const Index = () => {
         onCreate={(report, projectId) => { if (projectId) addReport(projectId, report); }}
       />
       <ProfessionalModal professional={selectedProfessional} onClose={() => setSelectedProfessional(null)} />
+      <ChangePasswordModal isOpen={pwdOpen} onClose={() => setPwdOpen(false)} />
     </div>
   );
 };

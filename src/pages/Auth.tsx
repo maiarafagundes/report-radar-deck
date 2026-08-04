@@ -18,7 +18,7 @@ export default function Auth() {
   const rawNext = searchParams.get('next');
   // Only allow same-origin relative paths as post-auth redirect targets.
   const nextPath = rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/';
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -71,12 +71,27 @@ export default function Auth() {
     } finally { setBusy(false); }
   };
 
+  const handleForgot = async () => {
+    if (!validateDomain()) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({ title: 'E-mail enviado', description: 'Verifique sua caixa de entrada para redefinir a senha.' });
+      setMode('signin');
+    } catch (e: any) {
+      toast({ title: 'Erro ao enviar e-mail', description: e?.message ?? '', variant: 'destructive' });
+    } finally { setBusy(false); }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="glass-card w-full max-w-md p-8">
         <div className="flex items-center gap-2 mb-6">
           <Activity className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold">{mode === 'signin' ? 'Entrar' : 'Solicitar acesso'}</h1>
+          <h1 className="text-xl font-bold">{mode === 'signin' ? 'Entrar' : mode === 'signup' ? 'Solicitar acesso' : 'Recuperar senha'}</h1>
         </div>
         <p className="text-xs text-muted-foreground mb-6">
           Acesso restrito a usuários com e-mail <strong>@v8.tech</strong>. Novas contas precisam ser aprovadas por um administrador.
@@ -92,13 +107,28 @@ export default function Auth() {
             <Label className="text-xs">E-mail (@v8.tech)</Label>
             <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="voce@v8.tech" />
           </div>
-          <div>
-            <Label className="text-xs">Senha</Label>
-            <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" />
-          </div>
-          <Button className="w-full" disabled={busy} onClick={mode === 'signin' ? handleSignIn : handleSignUp}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === 'signin' ? 'Entrar' : 'Solicitar acesso')}
+          {mode !== 'forgot' && (
+            <div>
+              <Label className="text-xs">Senha</Label>
+              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••" />
+            </div>
+          )}
+          <Button
+            className="w-full"
+            disabled={busy}
+            onClick={mode === 'signin' ? handleSignIn : mode === 'signup' ? handleSignUp : handleForgot}
+          >
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === 'signin' ? 'Entrar' : mode === 'signup' ? 'Solicitar acesso' : 'Enviar link de recuperação')}
           </Button>
+          {mode === 'signin' && (
+            <button
+              type="button"
+              onClick={() => setMode('forgot')}
+              className="block w-full text-center text-xs text-muted-foreground hover:text-foreground"
+            >
+              Esqueci minha senha
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}

@@ -141,6 +141,9 @@ const Index = () => {
               </div>
             )}
             <ThemeToggle />
+            <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={() => setPwdOpen(true)}>
+              Alterar senha
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5 h-8" onClick={signOut}>
               <LogOut className="h-3.5 w-3.5" />
               Sair
